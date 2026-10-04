@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Document Summarizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Top bar: links back to the main homepage -->
+<header class="bar">
+  <a href="../index.html" class="back">← Home</a>
+  <span class="brand">AI DOCUMENT SUMMARIZER</span>
+  <a href="../index.html#interfaces" class="pill">All interfaces ↗</a>
+</header>
+
+<main>
+  <section class="head">
+    <p class="label">04 / AI DOCUMENTS</p>
+    <h1>Long documents,<br>made short.</h1>
+    <p class="lead">Paste any text and get a summary, key points and recommendations in seconds.</p>
+  </section>
+
+  <section class="work">
+    <!-- Input panel -->
+    <div class="panel">
+      <div class="panel-head"><span>YOUR DOCUMENT</span><span id="count">0 words</span></div>
+      <textarea id="doc" placeholder="Paste an article, report or notes here..."></textarea>
+      <div class="controls">
+        <div class="seg" id="length">
+          <button data-n="2">Short</button>
+          <button data-n="4" class="on">Medium</button>
+          <button data-n="6">Detailed</button>
+        </div>
+        <label class="ghost">Upload .txt<input type="file" id="file" accept=".txt" hidden></label>
+        <button class="ghost" id="sample">Try sample</button>
+        <button class="ghost" id="clear">Clear</button>
+      </div>
+      <button class="go" id="go">Summarize →</button>
+    </div>
+
+    <!-- Output panel -->
+    <div class="panel">
+      <div class="panel-head"><span>RESULT</span><button class="ghost mini" id="copy">Copy</button></div>
+      <div class="seg" id="tabs">
+        <button data-tab="summary" class="on">Summary</button>
+        <button data-tab="points">Key points</button>
+        <button data-tab="recs">Recommendations</button>
+      </div>
+      <div class="stats">
+        <div><small>Original</small><strong id="s1">0</strong></div>
+        <div><small>Summary</small><strong id="s2">0</strong></div>
+        <div><small>Shorter by</small><strong id="s3">0%</strong></div>
+      </div>
+      <div class="view" id="view"><p class="empty">Your summary will appear here.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>AI Document Summarizer · Web Technology Project · 2026</span>
+  <a href="../index.html#interfaces">← Back to the collection</a>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
