@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Assistant · UI Template Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head><body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="app">
+<aside id="side">
+  <div class="brand"><a href="../index.html" title="Back to collection">←</a><b>AI Assistant</b></div>
+  <button id="newChat" class="primary">+ New Chat</button>
+  <input id="filter" placeholder="Filter conversations" aria-label="Filter conversations">
+  <nav id="list"></nav>
+</aside>
+<main>
+  <header>
+    <button id="menu" class="ic only-m" aria-label="Chats">☰</button>
+    <span class="title" id="convTitle">New chat</span>
+    <button id="themeBtn" class="pill" title="Switch theme">◐ Theme</button>
+    <button id="voiceToggle" class="pill">Voice ON</button>
+  </header>
+  <section class="stage"><canvas id="robot" title="Drag to rotate, scroll to zoom" aria-label="3D robot. Drag to rotate."></canvas><div id="status" class="status">Idle</div></section>
+  <section id="msgs" aria-live="polite"></section>
+  <div id="results" hidden></div>
+  <div class="quick" id="quick">
+    <button>Explain recursion</button><button>Write Java code for a stack</button><button>Ask anything</button><button>Explain SQL joins</button><button>Current affairs</button>
+  </div>
+  <div class="bar" id="bar">
+    <div class="mode chat" id="chatMode">
+      <textarea id="input" rows="1" placeholder="Ask anything..." aria-label="Message"></textarea>
+      <div class="tools">
+        <button id="searchBtn" class="ic" title="Search messages (Ctrl/Cmd+K)">🔍</button>
+        <button id="micBtn" class="ic" title="Voice input">🎤<i class="wave"><u></u><u></u><u></u><u></u></i></button>
+        <button id="spkBtn" class="ic" title="Read last answer / stop">🔊</button>
+        <button id="send" class="ic go" title="Send">➤</button>
+      </div>
+    </div>
+    <div class="mode search" id="searchMode" hidden>
+      <button id="closeSearch" class="ic" title="Close search (Esc)">✕</button>
+      <input id="q" placeholder="Search messages..." aria-label="Search messages">
+      <button id="doSearch" class="ic">🔎</button>
+    </div>
+  </div>
+</main>
+</div>
+<div id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./script.js"></script>
+</body></html>
