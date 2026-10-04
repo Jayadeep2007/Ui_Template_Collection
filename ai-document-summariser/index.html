@@ -1,106 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Content Generator | AI Interface Collection</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Document Summarizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="nav" id="nav">
-    <a class="logo" href="../#home">AI INTERFACE COLLECTION</a>
-    <nav class="links" id="links" aria-label="Main">
-      <a href="../#home">Home</a>
-      <a href="../#interfaces">Interfaces</a>
-      <a href="../#about">About</a>
-      <a href="../#team">Team</a>
-    </nav>
-    <a class="pill" href="../#interfaces">Explore →</a>
-    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span></button>
-  </header>
 
-  <canvas id="bg3d" aria-hidden="true"></canvas>
-  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<!-- Moving background. To use a real video instead, put bg.mp4 in this folder and uncomment the <video> line. -->
+<div class="bg" aria-hidden="true">
+  <!-- <video class="bg-video" src="bg.mp4" autoplay muted loop playsinline></video> -->
+  <span class="orb o1"></span>
+  <span class="orb o2"></span>
+  <span class="orb o3"></span>
+  <span class="grain"></span>
+</div>
+<div class="glow" id="glow" aria-hidden="true"></div>
 
-  <main>
-    <section class="head">
-      <p class="label">03 / AI CREATION</p>
-      <h1>Write with a prompt.</h1>
-      <p class="lead">Pick a content type and a writing style, describe what you need, and shape the draft with one click.</p>
-    </section>
+<header class="nav">
+  <a class="back" href="../index.html">&larr; AI Interface Collection</a>
+</header>
 
-    <section class="studio">
-      <!-- Controls -->
-      <form id="gen-form" class="card controls" autocomplete="off">
-        <label for="prompt" class="label">YOUR PROMPT</label>
-        <div class="prompt-bar">
-          <input id="prompt" type="text" placeholder="Write a launch post for my app" required>
-          <button type="submit" id="generate-btn" aria-label="Generate">→</button>
-        </div>
+<main class="wrap">
+  <h1>Paste a long document.<br>Get the short version.</h1>
+  <p class="lead">Drop in text or upload a .txt file and choose how short you want the summary.</p>
 
-        <p class="label sub">CONTENT TYPE</p>
-        <div class="tags" role="radiogroup" aria-label="Content type">
-          <label><input type="radio" name="type" value="blog" checked><span>Blog</span></label>
-          <label><input type="radio" name="type" value="email"><span>Email</span></label>
-          <label><input type="radio" name="type" value="caption"><span>Caption</span></label>
-        </div>
+  <section class="panel">
+    <textarea id="input" placeholder="Paste your document here..." rows="9"></textarea>
 
-        <p class="label sub">WRITING STYLE</p>
-        <div class="tags" role="radiogroup" aria-label="Writing style">
-          <label><input type="radio" name="tone" value="formal"><span>Formal</span></label>
-          <label><input type="radio" name="tone" value="friendly" checked><span>Friendly</span></label>
-          <label><input type="radio" name="tone" value="playful"><span>Playful</span></label>
-        </div>
+    <div class="controls">
+      <label class="file">
+        <input type="file" id="file" accept=".txt,text/plain">
+        <span>Upload .txt file</span>
+      </label>
 
-        <p class="label sub">TRY ONE</p>
-        <div class="tags">
-          <button type="button" class="tag" data-prompt="Write a launch post for my app">Launch post</button>
-          <button type="button" class="tag" data-prompt="Announce our free study workshop series">Workshop</button>
-          <button type="button" class="tag" data-prompt="Introduce a reusable water bottle that keeps drinks cold">Product intro</button>
-        </div>
+      <label class="len">
+        Summary length
+        <input type="range" id="len" min="1" max="8" value="3">
+        <output id="lenOut">3 sentences</output>
+      </label>
 
-        <div class="history">
-          <p class="label sub">RECENT DRAFTS</p>
-          <ul id="history-list"><li class="empty">Your drafts will appear here.</li></ul>
-        </div>
-      </form>
+      <button id="go" class="btn">Summarize</button>
+    </div>
+  </section>
 
-      <!-- Output -->
-      <section class="card output" aria-live="polite" aria-label="Generated content">
-        <div class="out-head">
-          <div>
-            <p class="label">DRAFT</p>
-            <p id="out-meta" class="meta">Nothing generated yet</p>
-          </div>
-          <div class="actions">
-            <button type="button" id="copy-btn" class="btn" disabled>Copy</button>
-            <button type="button" id="regen-btn" class="btn dark" disabled>Regenerate</button>
-          </div>
-        </div>
-        <article id="draft" class="draft">
-          <p class="placeholder">Write a prompt, choose a type and style, then press the arrow. Your draft appears here.</p>
-        </article>
-        <div id="refine" class="refine" hidden>
-          <span>Refine</span>
-          <button type="button" class="tag" data-refine="shorter">Shorter</button>
-          <button type="button" class="tag" data-refine="longer">Longer</button>
-          <button type="button" class="tag" data-refine="formal">More formal</button>
-          <button type="button" class="tag" data-refine="friendly">Friendlier</button>
-        </div>
-      </section>
-    </section>
-  </main>
+  <section class="panel result" id="result" hidden>
+    <div class="stats" id="stats"></div>
+    <p id="summary"></p>
+    <button id="copy" class="btn ghost">Copy summary</button>
+  </section>
+</main>
 
-  <footer>
-    <div><strong>AI Interface Collection</strong> HTML · CSS · JavaScript</div>
-    <div>Web Technology Project · 2026</div>
-    <button id="toTop" type="button">Back to top ↑</button>
-  </footer>
-
-  <div id="toast" class="toast" role="status"></div>
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
