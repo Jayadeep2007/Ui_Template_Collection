@@ -44,7 +44,7 @@ The goal is to create a collection of modern, responsive, and interactive UI tem
 
 ---
 
-## 🛠️ Technologies Used
+## 🛠️ Technology Used
 
 - HTML5
 - CSS3
