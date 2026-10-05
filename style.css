@@ -306,3 +306,29 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:998;op
 .step:hover::before{opacity:1}
 .step:hover{background:var(--off);color:var(--ink)}
 .step:hover p,.step:hover span{color:rgba(248,238,230,.85)}
+.members li {
+  display: grid !important;
+  grid-template-columns: 140px 1fr auto !important; /* label | name | project */
+  align-items: center !important;
+  justify-content: start !important;
+  padding-left: 0 !important;
+  transform: none !important;
+}
+
+.members li h3 {
+  grid-column: 2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  transform: none !important;
+}
+
+.members li span {
+  grid-column: 1 !important;
+  transform: none !important;
+}
+
+.members li em {
+  grid-column: 3 !important;
+  text-align: right !important;
+}
