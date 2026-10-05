@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="back" href="../index.html#interfaces">&larr; All interfaces</a>
+    <span class="hint">Press <kbd>/</kbd> to search</span>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>Ask anything.</h1>
+      <p class="lead">Get a short answer first, with the sources behind it.</p>
+
+      <form id="searchForm" class="search" autocomplete="off">
+        <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="text" placeholder="How do neural networks learn?" aria-label="Search"
+               aria-autocomplete="list" aria-controls="suggestions">
+        <button type="submit">Search</button>
+        <ul id="suggestions" role="listbox" hidden></ul>
+      </form>
+
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section id="output" class="output" aria-live="polite"></section>
+  </main>
+
+  <footer class="foot">AI Search &middot; HTML, CSS and JavaScript</footer>
+
+  <script src="bg3d.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
