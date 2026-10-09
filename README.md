@@ -62,7 +62,7 @@ The project focuses on modern web interface trends such as:
 
 - Clean and minimal layouts
 - Modern typography
-- Responsive design
+- Responsive desi
 - Card-based interfaces
 - Interactive components
 - Smooth hover effects
