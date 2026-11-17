@@ -1,227 +1,109 @@
+/* ---------- Draft builders ---------- */
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = (arr) => arr.map((v) => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
 
-/* ---------- Draft builders (improved variation) ---------- */
+function cleanTopic(raw) {
+  let s = raw.trim().replace(/[.!?]+$/, "");
+  // strip leading instructions like "write a", "create an", "announce", "introduce"
+  s = s.replace(/^(please\s+)?(write|create|draft|make|compose|generate|give me|announce|introduce)\s+(me\s+)?(a|an|the|our|my)?\s*/i, "");
+  return s || raw.trim();
+}
 
 function buildDraft({ type, topic, tone, length }) {
   const t = TONES[tone];
   const extra = { short: 0, medium: 1, long: 3 }[length];
+  const subject = cleanTopic(topic);
+  const sub = subject.toLowerCase();
+  const Sub = subject.charAt(0).toUpperCase() + subject.slice(1);
 
-  // Clean the user's prompt
-  const topicText = topic.trim()
-    .replace(/^(write|create|make|generate|draft|prepare)\s+(a|an|the)?\s*/i, "")
-    .replace(/[.!?]+$/, "");
-
-  const subject = topicText.charAt(0).toLowerCase() + topicText.slice(1);
-
-  // Select different wording each time
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  const introductions = {
+  const pointPool = {
     formal: [
-      `In today's evolving landscape, ${subject} deserves careful attention.`,
-      `A closer look at ${subject} reveals several interesting opportunities.`,
-      `${titleCase(subject)} presents an opportunity to make a meaningful difference.`
+      `${Sub} addresses a clear need and is designed with reliability in mind.`,
+      `It reduces unnecessary effort and allows time to be used more productively.`,
+      `The approach is straightforward and can be adopted without specialist knowledge.`,
+      `Results improve steadily with continued and consistent use.`,
+      `It has been built to be dependable, transparent and easy to evaluate.`
     ],
     friendly: [
-      `Let's explore ${subject} and why it matters.`,
-      `Have you ever thought about ${subject}? Here's something worth sharing.`,
-      `We're excited to talk about ${subject} with you!`
+      `${Sub} is built to make your day a little easier.`,
+      `It cuts out the boring steps so you can get to the good part.`,
+      `You can get started in a few minutes, no experience needed.`,
+      `The more you use it, the more it feels like it was made for you.`,
+      `We made it with real people in mind, and we think you will notice.`
     ],
     playful: [
-      `Ready to discover something exciting about ${subject}? Let's jump in!`,
-      `Big ideas start somewhere, and today we're talking about ${subject}!`,
-      `Here's something worth getting excited about: ${subject}!`
+      `${Sub}? Yes, it is as fun as it sounds.`,
+      `Say goodbye to boring busywork. We threw it out the window.`,
+      `Setup takes about as long as making a cup of tea.`,
+      `Use it once and you will wonder how you ever managed without it.`,
+      `Plot twist: it actually works, and works well.`
     ]
   };
+  const points = shuffle(pointPool[tone]);
+  const more = (n) => points.slice(0, 1 + n).join(" ");
 
-  const benefits = [
-    `One of the biggest advantages is the opportunity to make everyday tasks easier and more convenient.`,
-    `What makes this interesting is how it can turn a simple idea into something genuinely useful.`,
-    `It opens up new possibilities, saves valuable time, and makes the overall experience more enjoyable.`,
-    `The real value comes from solving everyday challenges in a practical and accessible way.`,
-    `Small improvements can make a surprisingly big difference, especially when they focus on people's actual needs.`
+  const blogOpeners = [
+    `${t.open} ${sub}. Whether you are new to the idea or already familiar, a clear starting point makes everything easier.`,
+    `Everyone has an opinion on ${sub}, but few explain where to begin. Let's fix that.`,
+    `If ${sub} has been on your mind lately, you are not alone. Here is a simple way to think about it.`,
+    `${Sub} is more than a passing idea. Here is why it deserves your attention.`
+  ];
+  const blogMiddles = [
+    `Consider where most people get stuck. Usually it is not the idea itself but the first step. Break it into small pieces and progress becomes visible quickly.`,
+    `A good way to approach ${sub} is to start small, test it, and improve as you learn what works.`,
+    `The best results with ${sub} come from curiosity: ask questions, try things, and keep notes on what changes.`
+  ];
+  const blogLong = [
+    `Real results come from consistency. Set a small weekly goal, review what worked, and adjust. Over a few weeks the gains compound.`,
+    `Do not worry about getting ${sub} perfect on day one. Momentum matters more than perfection, and every small win builds confidence.`
+  ];
+  const blogTitles = [
+    titleCase(sub),
+    `Getting Started With ${titleCase(sub)}`,
+    `Why ${titleCase(sub)} Matters`,
+    `A Simple Guide to ${titleCase(sub)}`
   ];
 
-  const details = [
-    `Start by understanding what people need most, then focus on the features and ideas that deliver real value.`,
-    `Think about the experience from the user's perspective. Simple, thoughtful improvements can make all the difference.`,
-    `With the right approach, even a challenging task can become easier to understand and manage.`,
-    `The best results come from combining useful ideas with consistent effort and attention to detail.`
+  const emailSubjects = [
+    `Subject: ${titleCase(sub)}`,
+    `Subject: Quick update on ${sub}`,
+    `Subject: Something new: ${sub}`,
+    `Subject: About ${sub}`
+  ];
+  const emailGreetings = { formal: ["Dear reader,", "Dear colleague,"], friendly: ["Hi there,", "Hello,"], playful: ["Hey you,", "Hi friend,"] };
+  const emailIntros = [
+    `${t.open} ${sub}, and I wanted you to hear it from us first.`,
+    `I am writing to share some news about ${sub}.`,
+    `We have been working on ${sub}, and today is the day to share it.`
   ];
 
-  const callsToAction = {
-    formal: [
-      `Explore the possibilities and consider how this could benefit you.`,
-      `Take the next step and discover the opportunities available.`,
-      `We invite you to learn more and experience the difference.`
-    ],
-    friendly: [
-      `Why not give it a try? We'd love to hear what you think!`,
-      `Give it a go and share your experience with us!`,
-      `Have a look, explore the possibilities, and let us know your thoughts.`
-    ],
-    playful: [
-      `Don't just imagine it. Give it a try and see the magic happen!`,
-      `Your next exciting experience starts here. Let's go!`,
-      `Ready to give it a spin? Let's make it happen!`
-    ]
-  };
+  const capHooks = [
+    `${Sub}.`,
+    `Big news: ${sub}.`,
+    `Here it is: ${sub}.`,
+    `Meet ${sub}.`
+  ];
+  const tagWords = subject.split(/\s+/).filter((w) => w.length > 3).slice(0, 2).map((w) => w.replace(/\W/g, ""));
+  const tagA = tagWords.length ? "#" + tagWords.join("") : "#Update";
+  const tagB = pick(["#NewDrop", "#JustLaunched", "#CheckItOut", "#ComingSoon"]);
 
-  const paragraphs = [];
-
-  // BLOG
   if (type === "blog") {
-    const title = titleCase(subject);
-
-    paragraphs.push(
-      pick(introductions[tone])
-    );
-
-    paragraphs.push(
-      `${titleCase(subject)} is more than just an interesting topic. ${pick(benefits)}`
-    );
-
-    if (extra >= 1) {
-      paragraphs.push(
-        pick(details)
-      );
-    }
-
-    if (extra >= 3) {
-      paragraphs.push(
-        `Another important factor is consistency. Pay attention to what works, learn from the experience, and keep improving. Over time, these small steps can lead to meaningful results.`
-      );
-
-      paragraphs.push(
-        `Ultimately, success comes from understanding the purpose, making informed decisions, and taking action at the right time.`
-      );
-    }
-
-    paragraphs.push(
-      pick(callsToAction[tone])
-    );
-
-    return { title, paras: paragraphs };
+    const paras = [pick(blogOpeners), `Here is what matters: ${more(extra)}`];
+    if (extra >= 1) paras.push(pick(blogMiddles));
+    if (extra >= 3) paras.push(pick(blogLong));
+    paras.push(t.cta);
+    return { title: pick(blogTitles), paras };
   }
-
-  // EMAIL
   if (type === "email") {
-    const greetings = {
-      formal: "Dear Reader,",
-      friendly: "Hi there,",
-      playful: "Hey there!",
-    };
-
-    const endings = {
-      formal: "Best regards,\nThe Team",
-      friendly: "Warmly,\nThe Team",
-      playful: "Cheers,\nThe Team",
-    };
-
-    const emailOpenings = {
-      formal: `We are pleased to share some information about ${subject}.`,
-      friendly: `We wanted to share something interesting with you about ${subject}.`,
-      playful: `We've got something exciting to tell you about ${subject}!`
-    };
-
-    paragraphs.push(
-      pick([greetings[tone]])
-    );
-
-    paragraphs.push(
-      pick([emailOpenings[tone]])
-    );
-
-    paragraphs.push(
-      pick(benefits)
-    );
-
-    if (extra >= 1) {
-      paragraphs.push(
-        pick(details)
-      );
-    }
-
-    if (extra >= 3) {
-      paragraphs.push(
-        `We believe this is a great opportunity to explore something new and discover its potential. We hope you find it as useful and exciting as we do.`
-      );
-    }
-
-    paragraphs.push(
-      pick(callsToAction[tone])
-    );
-
-    paragraphs.push(
-      endings[tone]
-    );
-
-    return {
-      title: `Subject: ${titleCase(subject)}`,
-      paras: paragraphs
-    };
+    const paras = [pick(emailGreetings[tone]), pick(emailIntros)];
+    if (extra >= 1) paras.push(more(extra));
+    paras.push(t.cta, `${t.sign}\nThe Team`);
+    return { title: pick(emailSubjects), paras };
   }
-
-  // CAPTION
   if (type === "caption") {
-    const captionOpenings = {
-      formal: [
-        `Introducing ${subject}.`,
-        `Discover something new: ${subject}.`,
-        `A closer look at ${subject}.`
-      ],
-      friendly: [
-        `Something exciting is here! ${titleCase(subject)} ✨`,
-        `A little something worth sharing: ${subject} 💚`,
-        `Good things deserve the spotlight. ${titleCase(subject)}!`
-      ],
-      playful: [
-        `🚀 Ready for something new? ${titleCase(subject)}!`,
-        `✨ New vibes, new possibilities: ${subject}!`,
-        `🎉 Here's something you don't want to miss: ${subject}!`
-      ]
-    };
-
-    paragraphs.push(
-      pick(captionOpenings[tone])
-    );
-
-    paragraphs.push(
-      pick(benefits)
-    );
-
-    if (extra >= 1) {
-      paragraphs.push(
-        pick(callsToAction[tone])
-      );
-    }
-
-    if (extra >= 3) {
-      paragraphs.push(
-        `Discover more, share with friends, and be part of the experience!`
-      );
-    }
-
-    const hashtags = subject
-      .split(/\s+/)
-      .filter(word => word.length > 2)
-      .slice(0, 3)
-      .map(word => "#" + word.replace(/\W/g, ""));
-
-    paragraphs.push(
-      hashtags.join(" ") + " #Explore #NewIdeas"
-    );
-
-    return {
-      title: "Social Media Caption",
-      paras: paragraphs
-    };
+    const paras = [`${pick(capHooks)} ${more(Math.min(extra, 1))} ${t.cta}`, `${tagA} ${tagB}`];
+    return { title: "Caption", paras };
   }
-
-  return {
-    title: titleCase(subject),
-    paras: [pick(introductions[tone]), pick(benefits)]
-  };
+  return { title: "", paras: [subject] };
 }
-
-const titleCase = (s) =>
-  s.replace(/\b\w/g, (c) => c.toUpperCase());
+const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
