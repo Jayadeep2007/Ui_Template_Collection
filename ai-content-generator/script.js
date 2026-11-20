@@ -435,6 +435,119 @@ function createCaption(topic, tone, length) {
   };
 }
 
+/* ===== CONTENT VARIATIONS FOR REGENERATION ===== */
+
+const REGEN_VARIATIONS = {
+  blog: {
+    formal: [
+      "This topic deserves careful consideration because its practical implications can influence important decisions.",
+      "A structured examination of this subject can reveal useful insights and opportunities for improvement.",
+      "Evaluating different perspectives is essential for developing a balanced understanding."
+    ],
+    friendly: [
+      "The great thing about this topic is that you can start exploring it at your own pace.",
+      "There is always something new to discover, especially when you approach it with curiosity.",
+      "Sometimes the simplest ideas are the ones that make the biggest difference."
+    ],
+    playful: [
+      "Here's where things get interesting — a little creativity can go a long way!",
+      "Who says learning something new has to be boring? Let's make it exciting!",
+      "Think of this as your chance to try something fresh and unexpected!"
+    ]
+  },
+  email: {
+    formal: [
+      "I would appreciate your consideration and look forward to your response.",
+      "Please let me know if any additional information would be helpful.",
+      "Thank you for taking the time to review this message."
+    ],
+    friendly: [
+      "I'd love to hear your thoughts whenever you have a moment.",
+      "Feel free to reach out if you'd like to discuss this further.",
+      "Looking forward to hearing from you soon!"
+    ],
+    playful: [
+      "Exciting things are ahead, and we'd love for you to be part of them!",
+      "We can't wait to hear what you think!",
+      "Let's keep the conversation going!"
+    ]
+  },
+  caption: {
+    formal: [
+      "Discover new perspectives and meaningful opportunities.",
+      "Explore ideas that inspire positive change.",
+      "Stay informed, stay curious, and keep exploring."
+    ],
+    friendly: [
+      "Good things happen when we share ideas and support each other! ✨",
+      "Here's to fresh starts and exciting possibilities! 💚",
+      "A little inspiration can make your whole day brighter! 🌟"
+    ],
+    playful: [
+      "Big energy, bold ideas, and endless possibilities! 🚀",
+      "New adventures are calling — who's coming along? 🔥",
+      "Let's turn ordinary moments into something unforgettable! ✨"
+    ]
+  }
+};
+
+let previousVariation = -1;
+
+function getFreshVariation(type, tone) {
+  const options =
+    REGEN_VARIATIONS[type]?.[tone] ||
+    REGEN_VARIATIONS.blog.friendly;
+
+  let index;
+
+  do {
+    index = Math.floor(Math.random() * options.length);
+  } while (index === previousVariation && options.length > 1);
+
+  previousVariation = index;
+
+  return options[index];
+}
+
+function createRegeneratedDraft(settings) {
+  const draft = buildDraft(settings);
+
+  const variation = getFreshVariation(
+    settings.type,
+    settings.tone
+  );
+
+  const paragraphs = [...draft.paras];
+
+  if (settings.type === "email") {
+    // Insert before the email sign-off.
+    paragraphs.splice(
+      Math.max(1, paragraphs.length - 1),
+      0,
+      variation
+    );
+  } else if (settings.type === "caption") {
+    // Insert before the hashtags.
+    paragraphs.splice(
+      Math.max(1, paragraphs.length - 1),
+      0,
+      variation
+    );
+  } else {
+    // Add an extra paragraph before the conclusion.
+    paragraphs.splice(
+      Math.max(1, paragraphs.length - 1),
+      0,
+      variation
+    );
+  }
+
+  return {
+    title: draft.title,
+    paras: paragraphs
+  };
+}
+
 /* =========================================
    MAIN DRAFT BUILDER
 ========================================= */
@@ -748,20 +861,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* ===== REGENERATE ===== */
 
-  regenBtn.addEventListener("click", () => {
-    if (!currentSettings) return;
+/* ===== FIXED REGENERATE BUTTON ===== */
 
-    currentDraft = buildDraft(currentSettings);
+regenBtn.addEventListener("click", () => {
+  if (!currentSettings) {
+    showToast("Generate a draft first");
+    return;
+  }
 
+  try {
+    // Create a fresh draft with different wording.
+    currentDraft = createRegeneratedDraft(currentSettings);
+
+    // Update the existing output panel.
     renderDraft(currentDraft);
+
+    // Save the new version in recent drafts.
     addHistory(currentSettings, currentDraft);
 
-    showToast("Draft regenerated!");
-  });
+    // Display success message.
+    showToast("New draft generated successfully!");
 
-  /* ===== REFINE ===== */
+  } catch (error) {
+    console.error("Regeneration error:", error);
+    showToast("Unable to regenerate draft");
+  }
+});
+
+   /* ===== REFINE ===== */
 
   $$("[data-refine]").forEach(button => {
     button.addEventListener("click", () => {
