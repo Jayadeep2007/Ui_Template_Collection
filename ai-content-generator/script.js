@@ -1,4 +1,3 @@
-
 /* ===== AI CONTENT GENERATOR ===== */
 
 const TONES = {
@@ -21,30 +20,53 @@ const TONES = {
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+// Fisher-Yates (unbiased)
+const shuffle = arr => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 
-const titleCase = s =>
-  s.replace(/\b\w/g, c => c.toUpperCase());
+// Capitalizes the first letter of each word without breaking "don't"
+const titleCase = s => s.replace(/(^|\s)(\S)/g, (_, sp, c) => sp + c.toUpperCase());
 
 function cleanTopic(raw) {
   let s = String(raw || "").trim().replace(/[.!?]+$/, "");
 
   s = s.replace(
-    /^(please\s+)?(write|create|draft|make|compose|generate|give me|announce|introduce)\s+(me\s+)?(a|an|the|our|my)?\s*/i,
+    /^(please\s+)?(can you\s+)?(write|create|draft|make|compose|generate|give me|announce|introduce)\s+(me\s+)?(a|an|the|our|my)?\s*/i,
     ""
   );
 
-  return s || String(raw || "").trim();
+  s = s.replace(
+    /^(blog\s*post|blog|article|e-?mail|social media caption|caption|post)\s+(about|on|for|regarding|announcing)\s+/i,
+    ""
+  );
+
+  return s.trim() || String(raw || "").trim();
+}
+
+// Match "Blog Post" -> "blog", "Short" -> "short", etc.
+function normalize(value, allowed, fallback) {
+  const v = String(value || "").toLowerCase().trim();
+  return allowed.find(a => v === a || v.includes(a)) || fallback;
 }
 
 /* ===== CONTENT GENERATOR ===== */
 
 function buildDraft({ type, topic, tone, length }) {
-  const t = TONES[tone] || TONES.friendly;
-  const extra = { short: 0, medium: 1, long: 3 }[length] ?? 1;
+  type = normalize(type, ["blog", "email", "caption"], "blog");
+  tone = normalize(tone, Object.keys(TONES), "friendly");
+  length = normalize(length, ["short", "medium", "long"], "medium");
+
+  const t = TONES[tone];
+  const extra = { short: 0, medium: 1, long: 3 }[length];
 
   const subject = cleanTopic(topic);
-  const sub = subject.toLowerCase();
+  const sub = subject; // keep the user's casing (AI, Python, etc.)
   const Sub = subject.charAt(0).toUpperCase() + subject.slice(1);
 
   const pointPool = {
@@ -71,10 +93,8 @@ function buildDraft({ type, topic, tone, length }) {
     ]
   };
 
-  const points = shuffle(pointPool[tone] || pointPool.friendly);
-
-  const more = n =>
-    points.slice(0, Math.min(points.length, 1 + n)).join(" ");
+  const points = shuffle(pointPool[tone]);
+  const more = n => points.slice(0, Math.min(points.length, 1 + n)).join(" ");
 
   const blogOpeners = [
     `${t.open} ${sub}. Let's explore what makes this topic interesting and useful.`,
@@ -125,71 +145,35 @@ function buildDraft({ type, topic, tone, length }) {
     .split(/\s+/)
     .filter(w => w.length > 3)
     .slice(0, 2)
-    .map(w => w.replace(/\W/g, ""));
+    .map(w => w.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter(Boolean);
 
-  const tagA = tagWords.length
-    ? "#" + tagWords.join("")
-    : "#Update";
-
-  const tagB = pick([
-    "#Trending",
-    "#ExploreMore",
-    "#NewIdeas",
-    "#StayInspired"
-  ]);
+  const tagA = tagWords.length ? "#" + tagWords.join("") : "#Update";
+  const tagB = pick(["#Trending", "#ExploreMore", "#NewIdeas", "#StayInspired"]);
 
   if (type === "blog") {
-    const paras = [
-      pick(blogOpeners),
-      `Here is what you should know: ${more(extra)}`
-    ];
-
+    const paras = [pick(blogOpeners), `Here is what you should know: ${more(extra)}`];
     if (extra >= 1) paras.push(pick(blogMiddles));
     if (extra >= 3) paras.push(...blogLong);
-
     paras.push(t.cta);
-
-    return {
-      title: pick(blogTitles),
-      paras
-    };
+    return { title: pick(blogTitles), paras };
   }
 
   if (type === "email") {
     const paras = [
-      pick(emailGreetings[tone] || emailGreetings.friendly),
+      pick(emailGreetings[tone]),
       `I am writing to share some information about ${sub}.`
     ];
-
     if (extra >= 1) paras.push(more(extra));
     if (extra >= 3) paras.push(pick(blogMiddles));
-
-    paras.push(
-      t.cta,
-      `${t.sign}\nThe Team`
-    );
-
-    return {
-      title: pick(emailSubjects),
-      paras
-    };
+    paras.push(t.cta, `${t.sign}\nThe Team`);
+    return { title: pick(emailSubjects), paras };
   }
 
-  if (type === "caption") {
-    const paras = [
-      `${pick(captionHooks)} ${more(Math.min(extra, 3))} ${t.cta}`,
-      `${tagA} ${tagB}`
-    ];
-
-    return {
-      title: "Social Media Caption",
-      paras
-    };
-  }
-
+  // caption
   return {
-    title: titleCase(subject),
-    paras: [subject]
+    title: "Social Media Caption",
+    paras: [`${pick(captionHooks)} ${more(Math.min(extra, 3))} ${t.cta}`, `${tagA} ${tagB}`]
   };
 }
 
@@ -197,295 +181,14 @@ function buildDraft({ type, topic, tone, length }) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const find = (...selectors) => {
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
+    for (const s of selectors) {
+      const el = document.querySelector(s);
       if (el) return el;
     }
     return null;
   };
 
-  const topicInput = find(
-    "#topic",
-    "#topicInput",
-    "[name='topic']"
-  );
-
-  const typeInput = find(
-    "#type",
-    "#contentType",
-    "[name='type']"
-  );
-
-  const toneInput = find(
-    "#tone",
-    "[name='tone']"
-  );
-
-  const lengthInput = find(
-    "#length",
-    "[name='length']"
-  );
-
-  const output = find(
-    "#output",
-    "#result",
-    "#generatedContent",
-    ".output-content"
-  );
-
-  const generateBtn = find(
-    "#generateBtn",
-    "#generate",
-    "[data-action='generate']"
-  );
-
-  const copyBtn = find(
-    "#copyBtn",
-    "#copy",
-    "[data-action='copy']"
-  );
-
-  const downloadBtn = find(
-    "#downloadBtn",
-    "#download",
-    "[data-action='download']"
-  );
-
-  let generatedText = "";
-
-  function renderOutput(text) {
-    if (!output) {
-      console.warn("Output element not found.");
-      return;
-    }
-
-    if (
-      output.tagName === "TEXTAREA" ||
-      output.tagName === "INPUT"
-    ) {
-      output.value = text;
-    } else {
-      output.textContent = text;
-    }
-  }
-
-  function generateContent() {
-    const topic = topicInput?.value?.trim();
-
-    if (!topic) {
-      alert("Please enter a topic first.");
-      topicInput?.focus();
-      return;
-    }
-
-    const draft = buildDraft({
-      type: typeInput?.value || "blog",
-      topic,
-      tone: toneInput?.value || "friendly",
-      length: lengthInput?.value || "medium"
-    });
-
-    generatedText = [
-      draft.title,
-      ...draft.paras
-    ].join("\n\n");
-
-    renderOutput(generatedText);
-
-    if (output) {
-      output.style.animation = "none";
-      void output.offsetWidth;
-      output.style.animation = "contentAppear 0.5s ease";
-    }
-  }
-
-  generateBtn?.addEventListener("click", generateContent);
-
-  copyBtn?.addEventListener("click", async () => {
-    if (!generatedText) {
-      alert("Generate content first.");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(generatedText);
-      const original = copyBtn.textContent;
-      copyBtn.textContent = "Copied!";
-
-      setTimeout(() => {
-        copyBtn.textContent = original;
-      }, 1500);
-    } catch {
-      alert("Unable to copy automatically.");
-    }
-  });
-
-  downloadBtn?.addEventListener("click", () => {
-    if (!generatedText) {
-      alert("Generate content first.");
-      return;
-    }
-
-    const blob = new Blob([generatedText], {
-      type: "text/plain;charset=utf-8"
-    });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = "generated-content.txt";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    URL.revokeObjectURL(url);
-  });
-
-  /* ===== ANIMATED BACKGROUND ===== */
-
-  const style = document.createElement("style");
-
-  style.textContent = `
-    @keyframes floatOrb {
-      0%, 100% {
-        transform: translate(0, 0) scale(1);
-      }
-      50% {
-        transform: translate(60px, -70px) scale(1.15);
-      }
-    }
-
-    @keyframes contentAppear {
-      from {
-        opacity: 0;
-        transform: translateY(15px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .animated-orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(65px);
-      opacity: 0.32;
-      pointer-events: none;
-      z-index: -1;
-      animation: floatOrb 12s ease-in-out infinite;
-    }
-
-    .custom-cursor {
-      position: fixed;
-      width: 22px;
-      height: 22px;
-      border: 2px solid #a78bfa;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 99999;
-      transform: translate(-50%, -50%);
-      transition: width 0.2s, height 0.2s;
-      box-shadow: 0 0 20px #a78bfa88;
-    }
-
-    .cursor-dot {
-      position: fixed;
-      width: 6px;
-      height: 6px;
-      background: #c4b5fd;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 100000;
-      transform: translate(-50%, -50%);
-    }
-
-    @media (pointer: coarse) {
-      .custom-cursor,
-      .cursor-dot {
-        display: none;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .animated-orb {
-        animation: none;
-      }
-    }
-  `;
-
-  document.head.appendChild(style);
-
-  const orbColors = [
-    "rgba(168,85,247,0.45)",
-    "rgba(236,72,153,0.35)",
-    "rgba(99,102,241,0.35)"
-  ];
-
-  orbColors.forEach((color, index) => {
-    const orb = document.createElement("div");
-    orb.className = "animated-orb";
-
-    orb.style.width = `${250 + index * 90}px`;
-    orb.style.height = `${250 + index * 90}px`;
-    orb.style.background = color;
-    orb.style.top = `${index * 28}%`;
-    orb.style.left = `${index * 30}%`;
-    orb.style.animationDelay = `${index * -4}s`;
-
-    document.body.appendChild(orb);
-  });
-
-  /* ===== GLOWING FOLLOW CURSOR ===== */
-
-  if (window.matchMedia("(pointer: fine)").matches) {
-    const cursor = document.createElement("div");
-    cursor.className = "custom-cursor";
-
-    const dot = document.createElement("div");
-    dot.className = "cursor-dot";
-
-    document.body.appendChild(cursor);
-    document.body.appendChild(dot);
-
-    let mouseX = -100;
-    let mouseY = -100;
-    let cursorX = -100;
-    let cursorY = -100;
-
-    document.addEventListener("mousemove", e => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-
-      dot.style.left = `${mouseX}px`;
-      dot.style.top = `${mouseY}px`;
-    });
-
-    function animateCursor() {
-      cursorX += (mouseX - cursorX) * 0.14;
-      cursorY += (mouseY - cursorY) * 0.14;
-
-      cursor.style.left = `${cursorX}px`;
-      cursor.style.top = `${cursorY}px`;
-
-      requestAnimationFrame(animateCursor);
-    }
-
-    animateCursor();
-
-    document.querySelectorAll(
-      "button, a, input, select, textarea"
-    ).forEach(el => {
-      el.addEventListener("mouseenter", () => {
-        cursor.style.width = "42px";
-        cursor.style.height = "42px";
-      });
-
-      el.addEventListener("mouseleave", () => {
-        cursor.style.width = "22px";
-        cursor.style.height = "22px";
-      });
-    });
-  }
-});
+  const topicInput  = find("#topic", "#topicInput", "[name='topic']");
+  const typeInput   = find("#type", "#contentType", "[name='type']");
+  const toneInput   = find("#tone",
+                           
