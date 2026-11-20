@@ -191,21 +191,73 @@ document.addEventListener("DOMContentLoaded", () => {
     return el.dataset.value || fallback;
   }
 
-  function showOutput(text) {
-    if (!output) {
-      console.error(
-        "Output element not found. Check its HTML ID."
-      );
-      alert("Output area not found. Check your HTML IDs.");
-      return;
-    }
+function showOutput(text) {
+  let resultArea =
+    document.querySelector("#output") ||
+    document.querySelector("#result") ||
+    document.querySelector("#generatedContent") ||
+    document.querySelector("#outputText") ||
+    document.querySelector("#resultText") ||
+    document.querySelector("#preview") ||
+    document.querySelector(".output-content") ||
+    document.querySelector(".generated-content") ||
+    document.querySelector(".result-content") ||
+    document.querySelector("[data-output]");
 
-    if (output.matches("textarea, input")) {
-      output.value = text;
+  // Create an output area if none exists
+  if (!resultArea) {
+    resultArea = document.createElement("div");
+    resultArea.id = "generatedContent";
+
+    resultArea.style.cssText = `
+      margin: 24px auto;
+      padding: 25px;
+      max-width: 900px;
+      background: rgba(30, 25, 50, 0.92);
+      color: #ffffff;
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      border-radius: 16px;
+      font-size: 16px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+    `;
+
+    const generateButton =
+      document.querySelector("#generateBtn") ||
+      document.querySelector("#generate") ||
+      document.querySelector("#generateButton") ||
+      document.querySelector("[data-action='generate']");
+
+    if (generateButton) {
+      generateButton.insertAdjacentElement(
+        "afterend",
+        resultArea
+      );
     } else {
-      output.textContent = text;
+      document.body.appendChild(resultArea);
     }
   }
+
+  // Display generated content
+  if (
+    resultArea.tagName === "TEXTAREA" ||
+    resultArea.tagName === "INPUT"
+  ) {
+    resultArea.value = text;
+  } else {
+    resultArea.textContent = text;
+    resultArea.style.whiteSpace = "pre-wrap";
+  }
+
+  resultArea.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+
+  console.log("Content generated successfully!");
+}
 
   function generateContent(event) {
     if (event) event.preventDefault();
