@@ -1,592 +1,20 @@
 
 "use strict";
 
-/* =========================================
-   AI CONTENT GENERATOR
-   Compatible with existing index.html
-========================================= */
-
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
-
-const pick = arr =>
-  arr[Math.floor(Math.random() * arr.length)];
-
-const shuffle = arr => {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-};
-
-const titleCase = text =>
-  text.replace(/\b\w/g, letter => letter.toUpperCase());
-
-const TONES = {
-  formal: {
-    intro: "We are pleased to share information about",
-    closing: "We appreciate your interest and welcome further discussion.",
-    greeting: "Dear Team,",
-    sign: "Best regards,"
-  },
-  friendly: {
-    intro: "Let's talk about",
-    closing: "We hope you find this helpful. We'd love to hear your thoughts!",
-    greeting: "Hi there,",
-    sign: "Cheers,"
-  },
-  playful: {
-    intro: "Get ready for",
-    closing: "Sounds exciting, right? Let's make it happen!",
-    greeting: "Hey everyone!",
-    sign: "Stay awesome,"
-  }
-};
-
-/* =========================================
-   CLEAN AND UNDERSTAND PROMPT
-========================================= */
-
-function cleanTopic(raw) {
-  let text = String(raw || "").trim();
-
-  text = text.replace(/[.!?]+$/, "");
-
-  text = text.replace(
-    /^(please\s+)?(write|create|draft|make|compose|generate|give me)\s+(me\s+)?/i,
-    ""
-  );
-
-  text = text.replace(
-    /^(a|an|the)\s+(blog post|blog|email|caption|post|article|announcement)\s+(about|on|for|regarding|to)?\s*/i,
-    ""
-  );
-
-  return text.trim() || String(raw || "").trim();
-}
-
-function detectIntent(prompt) {
-  const text = prompt.toLowerCase();
-
-  if (/\b(apolog|sorry|regret)\b/.test(text)) {
-    return "apology";
-  }
-
-  if (/\b(leave|absence|day off|sick)\b/.test(text)) {
-    return "leave";
-  }
-
-  if (/\b(invite|invitation|workshop|seminar|event)\b/.test(text)) {
-    return "event";
-  }
-
-  if (/\b(launch|introduce|product|app|opening)\b/.test(text)) {
-    return "launch";
-  }
-
-  if (/\b(thank|gratitude|appreciat)\b/.test(text)) {
-    return "thanks";
-  }
-
-  if (/\b(guide|how to|steps|tutorial)\b/.test(text)) {
-    return "guide";
-  }
-
-  return "general";
-}
-
-function getTopicData(prompt) {
-  const subject = cleanTopic(prompt);
-  const intent = detectIntent(prompt);
-
-  const words = subject.split(/\s+/).filter(Boolean);
-  const title = titleCase(subject);
-
-  return {
-    subject,
-    title,
-    intent,
-    words
-  };
-}
-
-/* =========================================
-   GENERATE BLOG CONTENT
-========================================= */
-
-function createBlog(topic, tone, length) {
-  const t = TONES[tone];
-  const { subject, title, intent } = getTopicData(topic);
-
-  const opening = {
-    formal:
-      `${title} is a subject worth exploring carefully. Understanding its purpose, practical applications, and possible challenges can help readers make informed decisions.`,
-    friendly:
-      `Have you ever wondered about ${subject}? Whether you're just getting started or looking for fresh ideas, this guide will help you explore the topic in a simple way.`,
-    playful:
-      `Ready to discover something interesting? Today we're diving into ${subject}, exploring useful ideas, and finding ways to make the most of it!`
-  };
-
-  const sections = {
-    general: [
-      {
-        heading: "Understanding the Topic",
-        body:
-          `Start by identifying what ${subject} means in your particular situation. Consider who it affects, why it matters, and what you want to achieve. A clear understanding of the goal helps you avoid unnecessary complexity.`
-      },
-      {
-        heading: "Key Considerations",
-        body:
-          `When exploring ${subject}, focus on relevance, accessibility, and practical value. Look for reliable information, compare different approaches, and consider which ideas are most suitable for your needs.`
-      },
-      {
-        heading: "Getting Started",
-        body:
-          `Begin with a specific goal. Break the process into manageable steps, choose a realistic starting point, and review your progress regularly. Use feedback to improve your approach.`
-      },
-      {
-        heading: "Common Challenges",
-        body:
-          `A lack of planning, unclear expectations, or insufficient information can slow progress. Address these challenges by setting priorities, seeking feedback, and making adjustments when needed.`
-      }
-    ],
-    guide: [
-      {
-        heading: "Step 1: Define Your Goal",
-        body:
-          `Decide what you want to accomplish with ${subject}. Write down a clear outcome so that your efforts stay focused.`
-      },
-      {
-        heading: "Step 2: Prepare the Essentials",
-        body:
-          `Gather the information, tools, and resources you need. Check that your approach is practical for your available time and budget.`
-      },
-      {
-        heading: "Step 3: Take Action",
-        body:
-          `Work through the process in small stages. Test each step, identify issues early, and make improvements as you learn.`
-      },
-      {
-        heading: "Step 4: Review Results",
-        body:
-          `Compare your results with your original goal. Record what worked, identify what needs improvement, and plan your next steps.`
-      }
-    ],
-    launch: [
-      {
-        heading: "Introducing the Idea",
-        body:
-          `${title} creates an opportunity to introduce something new. A successful introduction begins by explaining the purpose clearly and showing the audience why it may be relevant to them.`
-      },
-      {
-        heading: "What Makes It Interesting",
-        body:
-          `Focus on the main idea behind ${subject}. Explain the intended experience, the problem being addressed, and what people can expect, without making unsupported promises.`
-      },
-      {
-        heading: "Connecting With Your Audience",
-        body:
-          `Use clear messaging, relevant examples, and an inviting tone. Encourage questions and provide a straightforward way for interested people to learn more.`
-      },
-      {
-        heading: "Planning the Next Steps",
-        body:
-          `Prepare your announcement, review the details, and establish how you will collect feedback. Use what you learn to guide future improvements.`
-      }
-    ]
-  };
-
-  const chosen = sections[intent] || sections.general;
-
-  const count = {
-    short: 1,
-    medium: 2,
-    long: 4
-  }[length] || 2;
-
-  const paragraphs = [
-    opening[tone] || opening.friendly
-  ];
-
-  chosen.slice(0, count).forEach(section => {
-    paragraphs.push(
-      `${section.heading}\n${section.body}`
-    );
-  });
-
-  if (length === "long") {
-    paragraphs.push(
-      `Practical Takeaways\nFor ${subject}, start with a realistic objective, communicate clearly, and use measurable feedback to decide what to improve. Small, consistent actions are often easier to sustain than overly ambitious plans.`
-    );
-  }
-
-  paragraphs.push(
-    `Final Thoughts\n${t.closing}`
-  );
-
-  return {
-    title: `A Guide to ${title}`,
-    paras: paragraphs
-  };
-}
-
-/* =========================================
-   GENERATE EMAIL CONTENT
-========================================= */
-
-function createEmail(topic, tone, length) {
-  const t = TONES[tone];
-  const { subject, intent } = getTopicData(topic);
-
-  let emailSubject = titleCase(subject);
-  let paragraphs = [];
-
-  if (intent === "leave") {
-    emailSubject = "Request for Leave";
-
-    paragraphs = [
-      t.greeting,
-      "I am writing to request leave from my responsibilities for a period that I will confirm with you.",
-      "Please let me know if the requested dates can be approved. I will coordinate any pending work and ensure that important responsibilities are addressed before my absence."
-    ];
-
-    if (length === "long") {
-      paragraphs.push(
-        "I am happy to discuss a suitable handover plan and provide any additional information required."
-      );
-    }
-
-    paragraphs.push(
-      "Thank you for considering my request."
-    );
-  }
-
-  else if (intent === "apology") {
-    emailSubject = "Apology and Follow-Up";
-
-    paragraphs = [
-      t.greeting,
-      `I would like to sincerely apologize regarding ${subject}.`,
-      "I understand that the situation may have caused inconvenience, and I appreciate your patience.",
-      "I will take the necessary steps to address the issue and communicate any relevant updates."
-    ];
-
-    if (length === "long") {
-      paragraphs.push(
-        "Please let me know if there is anything further I can do to help resolve the matter."
-      );
-    }
-  }
-
-  else if (intent === "event") {
-    emailSubject = `Invitation: ${titleCase(subject)}`;
-
-    paragraphs = [
-      t.greeting,
-      `We are excited to invite you to ${subject}.`,
-      "This event is intended to bring people together to learn, exchange ideas, and participate in meaningful discussions.",
-      "We would be delighted to have you join us."
-    ];
-
-    if (length === "long") {
-      paragraphs.push(
-        "Additional details, including the schedule, venue, and registration information, will be shared when confirmed."
-      );
-    }
-
-    paragraphs.push(
-      "We look forward to your participation."
-    );
-  }
-
-  else if (intent === "launch") {
-    emailSubject = `Introducing ${titleCase(subject)}`;
-
-    paragraphs = [
-      t.greeting,
-      `We are excited to share an announcement about ${subject}.`,
-      "Our aim is to introduce an experience that is useful, accessible, and thoughtfully designed.",
-      "We invite you to learn more and share your feedback."
-    ];
-
-    if (length === "long") {
-      paragraphs.push(
-        "We will share further details about availability, features, and next steps as they are confirmed."
-      );
-    }
-  }
-
-  else if (intent === "thanks") {
-    emailSubject = "Thank You";
-
-    paragraphs = [
-      t.greeting,
-      `I wanted to express my appreciation regarding ${subject}.`,
-      "Your time, effort, and support are greatly valued.",
-      "Thank you once again for your contribution."
-    ];
-  }
-
-  else {
-    emailSubject = titleCase(subject);
-
-    paragraphs = [
-      t.greeting,
-      `I am writing to discuss ${subject}.`,
-      "I would appreciate the opportunity to share some thoughts and explore the next steps.",
-      "Please let me know your feedback or availability for further discussion."
-    ];
-
-    if (length === "long") {
-      paragraphs.push(
-        "I would be happy to provide additional context and coordinate a suitable plan based on your suggestions."
-      );
-    }
-  }
-
-  if (length === "short") {
-    paragraphs = paragraphs.slice(0, 3);
-  }
-
-  paragraphs.push(`${t.sign}\n[Your Name]`);
-
-  return {
-    title: `Subject: ${emailSubject}`,
-    paras: paragraphs
-  };
-}
-
-/* =========================================
-   GENERATE SOCIAL CAPTIONS
-========================================= */
-
-function createCaption(topic, tone, length) {
-  const { subject, title, intent, words } = getTopicData(topic);
-
-  const hooks = {
-    formal: [
-      `Introducing ${subject}.`,
-      `An important update: ${subject}.`,
-      `Discover more about ${subject}.`
-    ],
-    friendly: [
-      `We've got something to share! ${title} ✨`,
-      `Let's talk about ${subject}! 💚`,
-      `Something exciting is happening!`
-    ],
-    playful: [
-      `Big news alert! 🚀 ${title}!`,
-      `Guess what's happening? 👀 ${title}!`,
-      `New vibes unlocked! ✨ ${title}!`
-    ]
-  };
-
-  const details = {
-    event:
-      "Join us for an opportunity to connect, learn, and share ideas.",
-    launch:
-      "We're excited to introduce something new and hear what you think.",
-    guide:
-      "Explore useful tips and discover practical ways to get started.",
-    general:
-      "A fresh perspective, new ideas, and something worth exploring."
-  };
-
-  const body = details[intent] || details.general;
-
-  const hashtags = words
-    .map(w => w.replace(/[^a-zA-Z0-9]/g, ""))
-    .filter(w => w.length > 2)
-    .slice(0, 3)
-    .map(w => `#${titleCase(w)}`)
-    .join(" ");
-
-  const paragraphs = [
-    pick(hooks[tone] || hooks.friendly)
-  ];
-
-  if (length !== "short") {
-    paragraphs.push(body);
-  }
-
-  if (length === "long") {
-    paragraphs.push(
-      `Whether you're discovering ${subject} for the first time or already interested, we'd love to hear your thoughts.`
-    );
-  }
-
-  paragraphs.push(
-    tone === "formal"
-      ? "Learn more and join the conversation."
-      : tone === "playful"
-        ? "Who's excited? Tell us below! 🔥"
-        : "What do you think? Let us know! 💬"
-  );
-
-  paragraphs.push(
-    `${hashtags} #StayInspired #ExploreMore`
-  );
-
-  return {
-    title: "Social Media Caption",
-    paras: paragraphs
-  };
-}
-
-/* ===== CONTENT VARIATIONS FOR REGENERATION ===== */
-
-const REGEN_VARIATIONS = {
-  blog: {
-    formal: [
-      "This topic deserves careful consideration because its practical implications can influence important decisions.",
-      "A structured examination of this subject can reveal useful insights and opportunities for improvement.",
-      "Evaluating different perspectives is essential for developing a balanced understanding."
-    ],
-    friendly: [
-      "The great thing about this topic is that you can start exploring it at your own pace.",
-      "There is always something new to discover, especially when you approach it with curiosity.",
-      "Sometimes the simplest ideas are the ones that make the biggest difference."
-    ],
-    playful: [
-      "Here's where things get interesting — a little creativity can go a long way!",
-      "Who says learning something new has to be boring? Let's make it exciting!",
-      "Think of this as your chance to try something fresh and unexpected!"
-    ]
-  },
-  email: {
-    formal: [
-      "I would appreciate your consideration and look forward to your response.",
-      "Please let me know if any additional information would be helpful.",
-      "Thank you for taking the time to review this message."
-    ],
-    friendly: [
-      "I'd love to hear your thoughts whenever you have a moment.",
-      "Feel free to reach out if you'd like to discuss this further.",
-      "Looking forward to hearing from you soon!"
-    ],
-    playful: [
-      "Exciting things are ahead, and we'd love for you to be part of them!",
-      "We can't wait to hear what you think!",
-      "Let's keep the conversation going!"
-    ]
-  },
-  caption: {
-    formal: [
-      "Discover new perspectives and meaningful opportunities.",
-      "Explore ideas that inspire positive change.",
-      "Stay informed, stay curious, and keep exploring."
-    ],
-    friendly: [
-      "Good things happen when we share ideas and support each other! ✨",
-      "Here's to fresh starts and exciting possibilities! 💚",
-      "A little inspiration can make your whole day brighter! 🌟"
-    ],
-    playful: [
-      "Big energy, bold ideas, and endless possibilities! 🚀",
-      "New adventures are calling — who's coming along? 🔥",
-      "Let's turn ordinary moments into something unforgettable! ✨"
-    ]
-  }
-};
-
-let previousVariation = -1;
-
-function getFreshVariation(type, tone) {
-  const options =
-    REGEN_VARIATIONS[type]?.[tone] ||
-    REGEN_VARIATIONS.blog.friendly;
-
-  let index;
-
-  do {
-    index = Math.floor(Math.random() * options.length);
-  } while (index === previousVariation && options.length > 1);
-
-  previousVariation = index;
-
-  return options[index];
-}
-
-function createRegeneratedDraft(settings) {
-  const draft = buildDraft(settings);
-
-  const variation = getFreshVariation(
-    settings.type,
-    settings.tone
-  );
-
-  const paragraphs = [...draft.paras];
-
-  if (settings.type === "email") {
-    // Insert before the email sign-off.
-    paragraphs.splice(
-      Math.max(1, paragraphs.length - 1),
-      0,
-      variation
-    );
-  } else if (settings.type === "caption") {
-    // Insert before the hashtags.
-    paragraphs.splice(
-      Math.max(1, paragraphs.length - 1),
-      0,
-      variation
-    );
-  } else {
-    // Add an extra paragraph before the conclusion.
-    paragraphs.splice(
-      Math.max(1, paragraphs.length - 1),
-      0,
-      variation
-    );
-  }
-
-  return {
-    title: draft.title,
-    paras: paragraphs
-  };
-}
-
-/* =========================================
-   MAIN DRAFT BUILDER
-========================================= */
-
-function buildDraft({
-  type = "blog",
-  topic = "",
-  tone = "friendly",
-  length = "medium"
-}) {
-  if (!topic.trim()) {
-    return {
-      title: "No topic entered",
-      paras: ["Please enter a prompt to continue."]
-    };
-  }
-
-  if (type === "email") {
-    return createEmail(topic, tone, length);
-  }
-
-  if (type === "caption") {
-    return createCaption(topic, tone, length);
-  }
-
-  return createBlog(topic, tone, length);
-}
-
-/* =========================================
-   INITIALIZE WEBSITE
-========================================= */
+/* ==========================================
+   AI CONTENT GENERATOR - COMPLETE SCRIPT
+   Compatible with your existing HTML + CSS
+========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => [...document.querySelectorAll(selector)];
 
   const form = $("#gen-form");
   const promptInput = $("#prompt");
   const draftArea = $("#draft");
   const meta = $("#out-meta");
-  const generateBtn = $("#generate-btn");
   const copyBtn = $("#copy-btn");
   const regenBtn = $("#regen-btn");
   const refineArea = $("#refine");
@@ -594,10 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = $("#toast");
 
   if (!form || !promptInput || !draftArea) {
-    console.error(
-      "Required HTML elements are missing.",
-      { form, promptInput, draftArea }
-    );
+    console.error("Generator HTML elements not found.");
     return;
   }
 
@@ -605,9 +30,69 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSettings = null;
   let currentLength = "medium";
   let history = [];
-  let toastTimer;
+  let version = 0;
+  let toastTimer = null;
 
-  /* ===== TOAST ===== */
+  const STORAGE_KEY = "deep-lagoon-drafts-v2";
+
+  /* ==========================================
+     HELPERS
+  ========================================== */
+
+  function titleCase(value) {
+    return String(value).replace(
+      /\b[a-z]/g,
+      char => char.toUpperCase()
+    );
+  }
+
+  function cleanTopic(value) {
+    let text = String(value || "").trim();
+
+    text = text.replace(/[.!?]+$/, "");
+
+    text = text.replace(
+      /^(please\s+)?(write|create|draft|make|compose|generate|give me)\s+(me\s+)?/i,
+      ""
+    );
+
+    text = text.replace(
+      /^(a|an|the|my|our)\s+(blog post|blog|email|caption|social media post|instagram post|article|post)\s+(about|on|for|regarding|to)?\s*/i,
+      ""
+    );
+
+    return text.trim() || String(value).trim();
+  }
+
+  function detectIntent(value) {
+    const text = value.toLowerCase();
+
+    if (/\b(apologize|apology|sorry|regret)\b/.test(text)) {
+      return "apology";
+    }
+
+    if (/\b(leave|absence|day off|sick)\b/.test(text)) {
+      return "leave";
+    }
+
+    if (/\b(workshop|seminar|webinar|event|invite|invitation)\b/.test(text)) {
+      return "event";
+    }
+
+    if (/\b(launch|introduce|new app|new product|opening)\b/.test(text)) {
+      return "launch";
+    }
+
+    if (/\b(thank|gratitude|appreciation)\b/.test(text)) {
+      return "thanks";
+    }
+
+    if (/\b(guide|how to|steps|tutorial)\b/.test(text)) {
+      return "guide";
+    }
+
+    return "general";
+  }
 
   function showToast(message) {
     if (!toast) return;
@@ -619,51 +104,517 @@ document.addEventListener("DOMContentLoaded", () => {
 
     toastTimer = setTimeout(() => {
       toast.classList.remove("show");
-    }, 2400);
+    }, 2200);
   }
-
-  /* ===== READ SETTINGS ===== */
 
   function getSettings() {
     return {
       topic: promptInput.value.trim(),
-      type:
-        $('input[name="type"]:checked')?.value || "blog",
-      tone:
-        $('input[name="tone"]:checked')?.value || "friendly",
+      type: $('input[name="type"]:checked')?.value || "blog",
+      tone: $('input[name="tone"]:checked')?.value || "friendly",
       length: currentLength
     };
   }
 
-  /* ===== RENDER CONTENT ===== */
+  /* ==========================================
+     CONTENT VARIATIONS
+     Each version rotates through different
+     structures and wording.
+  ========================================== */
+
+  const blogStyles = [
+    {
+      label: "Practical Guide",
+      intro: topic =>
+        `Understanding ${topic} starts with a clear goal and a practical approach. Rather than trying to do everything at once, it helps to identify the most important steps and work through them carefully.`,
+      sections: [
+        {
+          heading: "Why It Matters",
+          body: topic =>
+            `${titleCase(topic)} can be explored by considering its purpose, its audience, and the results people hope to achieve. These factors help determine which ideas deserve attention.`
+        },
+        {
+          heading: "Getting Started",
+          body: topic =>
+            `Begin by defining what you want to accomplish with ${topic}. Gather relevant information, identify available resources, and create a simple action plan.`
+        },
+        {
+          heading: "Practical Strategies",
+          body: topic =>
+            `Break ${topic} into manageable tasks. Prioritize useful actions, monitor progress, and make improvements based on feedback.`
+        },
+        {
+          heading: "Measuring Progress",
+          body: topic =>
+            `Review the results of your work on ${topic}. Compare them with your original goals and decide what needs to change.`
+        }
+      ],
+      ending:
+        "The most effective starting point is a clear objective followed by consistent, manageable action."
+    },
+    {
+      label: "Creative Perspective",
+      intro: topic =>
+        `What if we explored ${topic} from a completely different angle? Fresh perspectives can reveal possibilities that are easy to overlook when we follow the same routine.`,
+      sections: [
+        {
+          heading: "A Fresh Way to Think",
+          body: topic =>
+            `Instead of focusing only on familiar approaches to ${topic}, ask what could be simplified, redesigned, or improved. New questions often lead to useful ideas.`
+        },
+        {
+          heading: "Exploring Possibilities",
+          body: topic =>
+            `Consider several approaches to ${topic}. Compare their strengths, identify possible limitations, and look for opportunities to combine useful ideas.`
+        },
+        {
+          heading: "Turning Ideas Into Action",
+          body: topic =>
+            `Choose one promising idea related to ${topic} and test it on a small scale. Learn from the result before investing additional time or resources.`
+        },
+        {
+          heading: "Keeping the Momentum",
+          body: topic =>
+            `Continue exploring ${topic} by collecting feedback, documenting discoveries, and experimenting with thoughtful improvements.`
+        }
+      ],
+      ending:
+        "Creativity becomes more valuable when imaginative thinking is combined with thoughtful execution."
+    },
+    {
+      label: "Professional Analysis",
+      intro: topic =>
+        `${titleCase(topic)} can be examined through its objectives, operational considerations, and potential outcomes. A structured analysis helps establish priorities and support informed decisions.`,
+      sections: [
+        {
+          heading: "Overview",
+          body: topic =>
+            `A useful assessment of ${topic} begins by defining its scope. Identify the relevant participants, expectations, and factors that may influence the outcome.`
+        },
+        {
+          heading: "Key Considerations",
+          body: topic =>
+            `Evaluate the resources, constraints, and opportunities associated with ${topic}. Clear criteria make it easier to compare possible approaches.`
+        },
+        {
+          heading: "Implementation",
+          body: topic =>
+            `Develop a realistic plan for ${topic}, assign responsibilities where appropriate, and establish milestones for reviewing progress.`
+        },
+        {
+          heading: "Evaluation",
+          body: topic =>
+            `Assess ${topic} using relevant evidence and measurable outcomes. Use the findings to refine the strategy and address emerging challenges.`
+        }
+      ],
+      ending:
+        "Clear planning, effective communication, and regular evaluation provide a strong foundation for improvement."
+    },
+    {
+      label: "Engaging Discussion",
+      intro: topic =>
+        `Why is everyone interested in ${topic}? The answer depends on what people want to learn, solve, or experience. Exploring these questions can make the subject more meaningful.`,
+      sections: [
+        {
+          heading: "The Big Question",
+          body: topic =>
+            `Think about what makes ${topic} relevant to your audience. Which challenges, interests, or goals are most closely connected to it?`
+        },
+        {
+          heading: "Looking at Different Views",
+          body: topic =>
+            `People may approach ${topic} with different expectations. Understanding those perspectives can help you communicate ideas more clearly.`
+        },
+        {
+          heading: "Making It Relevant",
+          body: topic =>
+            `Connect ${topic} to realistic situations. Use clear examples, invite questions, and encourage your audience to consider practical applications.`
+        },
+        {
+          heading: "Continuing the Conversation",
+          body: topic =>
+            `Encourage feedback about ${topic}. Thoughtful discussion can reveal new questions and help identify useful next steps.`
+        }
+      ],
+      ending:
+        "The best conversations begin with curiosity and continue through thoughtful questions and shared ideas."
+    }
+  ];
+
+  const emailVariations = {
+    general: [
+      [
+        "I wanted to reach out regarding {topic}.",
+        "I would appreciate the opportunity to discuss this further and explore suitable next steps.",
+        "Please share your thoughts whenever convenient."
+      ],
+      [
+        "I am contacting you to share an update about {topic}.",
+        "I believe a brief discussion would help clarify expectations and identify the most appropriate approach.",
+        "I look forward to hearing your feedback."
+      ],
+      [
+        "I hope you are doing well. I would like to bring {topic} to your attention.",
+        "Your input would be valuable as we consider the available options.",
+        "Please let me know how you would prefer to proceed."
+      ],
+      [
+        "I would like to start a conversation about {topic}.",
+        "It would be helpful to review the relevant details and agree on a practical way forward.",
+        "Thank you for taking the time to consider this."
+      ]
+    ],
+    leave: [
+      [
+        "I am writing to request leave for dates that I will confirm with you.",
+        "I will make arrangements to address any pending responsibilities before my absence.",
+        "Please let me know whether my request can be approved."
+      ],
+      [
+        "I would like to seek your approval for a period of leave.",
+        "I will coordinate a suitable handover and ensure important work is communicated in advance.",
+        "Thank you for considering my request."
+      ],
+      [
+        "I am requesting time away from my regular responsibilities.",
+        "I would be happy to discuss the dates and any arrangements needed to minimize disruption.",
+        "I appreciate your understanding."
+      ],
+      [
+        "I would like to discuss an upcoming leave request.",
+        "Please advise me on the approval process and any information you require.",
+        "I will ensure that necessary preparations are completed beforehand."
+      ]
+    ],
+    event: [
+      [
+        "We are delighted to invite you to {topic}.",
+        "This event offers an opportunity to connect, exchange ideas, and learn together.",
+        "We hope you will be able to join us."
+      ],
+      [
+        "We are pleased to announce {topic}.",
+        "Participants can look forward to a welcoming environment for learning and discussion.",
+        "We would be happy to have you take part."
+      ],
+      [
+        "You are warmly invited to {topic}.",
+        "The event is designed to encourage participation, conversation, and the sharing of useful insights.",
+        "We look forward to seeing you there."
+      ],
+      [
+        "We would love for you to join us for {topic}.",
+        "It is an opportunity to meet others, explore new ideas, and take part in meaningful activities.",
+        "Further details will be shared when confirmed."
+      ]
+    ],
+    launch: [
+      [
+        "We are excited to introduce {topic}.",
+        "Our goal is to create an experience that is useful, approachable, and thoughtfully designed.",
+        "We invite you to explore the announcement and share your thoughts."
+      ],
+      [
+        "We have something new to share: {topic}.",
+        "This introduction marks an opportunity to connect with our audience and learn from their feedback.",
+        "We look forward to sharing further updates."
+      ],
+      [
+        "We are pleased to announce {topic}.",
+        "We are preparing additional information to help people understand the idea and what to expect.",
+        "Thank you for your interest and support."
+      ],
+      [
+        "The next chapter begins with {topic}.",
+        "We are looking forward to introducing the concept and hearing what matters most to our community.",
+        "Stay tuned for more details."
+      ]
+    ],
+    apology: [
+      [
+        "I would like to sincerely apologize regarding {topic}.",
+        "I understand that the situation may have caused inconvenience.",
+        "I appreciate your patience and will work toward an appropriate resolution."
+      ],
+      [
+        "Please accept my apologies concerning {topic}.",
+        "I recognize the importance of addressing this matter carefully.",
+        "I will communicate any relevant updates as they become available."
+      ],
+      [
+        "I am sorry about the situation involving {topic}.",
+        "I understand your concerns and appreciate the opportunity to address them.",
+        "Thank you for your understanding."
+      ],
+      [
+        "I would like to express my regret regarding {topic}.",
+        "I take the matter seriously and will review the next steps.",
+        "Please let me know if further discussion would be helpful."
+      ]
+    ],
+    thanks: [
+      [
+        "Thank you for your contribution regarding {topic}.",
+        "Your time and effort are genuinely appreciated.",
+        "I look forward to continuing our positive collaboration."
+      ],
+      [
+        "I wanted to express my gratitude regarding {topic}.",
+        "Your support has been valuable and meaningful.",
+        "Thank you once again."
+      ],
+      [
+        "Please accept my sincere thanks concerning {topic}.",
+        "I appreciate the thought and effort involved.",
+        "Your contribution means a great deal."
+      ],
+      [
+        "I am grateful for your help regarding {topic}.",
+        "Your willingness to contribute is sincerely appreciated.",
+        "I hope we can continue working together."
+      ]
+    ]
+  };
+
+  const captionHooks = {
+    formal: [
+      "A new perspective on {topic}.",
+      "Discover what makes {topic} worth exploring.",
+      "Introducing a conversation about {topic}.",
+      "Explore fresh possibilities with {topic}."
+    ],
+    friendly: [
+      "Something exciting is happening with {topic}! ✨",
+      "Let's talk about {topic}! 💚",
+      "Here's a little inspiration for your day: {topic}! 🌟",
+      "We have something to share about {topic}! 💫"
+    ],
+    playful: [
+      "Big energy! 🚀 It's time for {topic}!",
+      "Guess what's on our minds? 👀 {topic}!",
+      "New vibes unlocked! 🔥 {topic}!",
+      "Ready for something awesome? ✨ {topic}!"
+    ]
+  };
+
+  const captionBodies = [
+    "We're excited to explore new ideas, share useful insights, and hear what you think.",
+    "Every new idea starts with curiosity. Here's to learning, creating, and trying something different.",
+    "There's always another perspective to discover. Let's keep the conversation going.",
+    "Fresh possibilities are worth exploring, especially when we share the journey with others."
+  ];
+
+  const captionClosings = [
+    "What do you think? Tell us below! 💬",
+    "Share your favorite idea in the comments! ✨",
+    "Who's ready to explore? 🙌",
+    "Let's hear your thoughts! 💚"
+  ];
+
+  function replaceTopic(text, topic) {
+    return text.replace(/\{topic\}/g, topic);
+  }
+
+  /* ==========================================
+     GENERATE BLOG
+  ========================================== */
+
+  function createBlog(settings, index) {
+    const topic = cleanTopic(settings.topic);
+    const style = blogStyles[index % blogStyles.length];
+
+    const titles = [
+      `A Practical Guide to ${titleCase(topic)}`,
+      `Exploring ${titleCase(topic)} From a Fresh Perspective`,
+      `Understanding ${titleCase(topic)}: Key Considerations`,
+      `${titleCase(topic)}: Ideas Worth Discussing`
+    ];
+
+    const count = {
+      short: 1,
+      medium: 2,
+      long: 4
+    }[settings.length] || 2;
+
+    const paragraphs = [style.intro(topic)];
+
+    style.sections.slice(0, count).forEach(section => {
+      paragraphs.push(
+        `${section.heading}\n${section.body(topic)}`
+      );
+    });
+
+    paragraphs.push(
+      `Final Thoughts\n${style.ending}`
+    );
+
+    return {
+      title: titles[index % titles.length],
+      paras: paragraphs
+    };
+  }
+
+  /* ==========================================
+     GENERATE EMAIL
+  ========================================== */
+
+  function createEmail(settings, index) {
+    const topic = cleanTopic(settings.topic);
+    const intent = detectIntent(settings.topic);
+
+    const options =
+      emailVariations[intent] ||
+      emailVariations.general;
+
+    const selected = options[index % options.length];
+
+    const greetings = {
+      formal: "Dear Team,",
+      friendly: "Hi there,",
+      playful: "Hey everyone!"
+    };
+
+    const signatures = {
+      formal: "Best regards,",
+      friendly: "Cheers,",
+      playful: "Stay awesome,"
+    };
+
+    const subjects = {
+      leave: "Request for Leave",
+      apology: "Apology and Follow-Up",
+      thanks: "Thank You",
+      event: `Invitation: ${titleCase(topic)}`,
+      launch: `Introducing ${titleCase(topic)}`,
+      general: titleCase(topic)
+    };
+
+    const paragraphs = [
+      greetings[settings.tone] || greetings.friendly
+    ];
+
+    const bodyCount = {
+      short: 2,
+      medium: 3,
+      long: 3
+    }[settings.length] || 3;
+
+    selected.slice(0, bodyCount).forEach(line => {
+      paragraphs.push(replaceTopic(line, topic));
+    });
+
+    if (settings.length === "long") {
+      paragraphs.push(
+        "Please let me know if you would like to discuss this further or if any additional information would be helpful."
+      );
+    }
+
+    paragraphs.push(
+      `${signatures[settings.tone] || signatures.friendly}\n[Your Name]`
+    );
+
+    return {
+      title: `Subject: ${subjects[intent] || subjects.general}`,
+      paras: paragraphs
+    };
+  }
+
+  /* ==========================================
+     GENERATE CAPTION
+  ========================================== */
+
+  function createCaption(settings, index) {
+    const topic = cleanTopic(settings.topic);
+
+    const hooks =
+      captionHooks[settings.tone] ||
+      captionHooks.friendly;
+
+    const hook = hooks[index % hooks.length];
+    const body = captionBodies[index % captionBodies.length];
+    const closing =
+      captionClosings[index % captionClosings.length];
+
+    const hashtags = topic
+      .split(/\s+/)
+      .map(word => word.replace(/[^a-zA-Z0-9]/g, ""))
+      .filter(word => word.length > 2)
+      .slice(0, 3)
+      .map(word => "#" + titleCase(word))
+      .join(" ");
+
+    const paragraphs = [
+      replaceTopic(hook, topic)
+    ];
+
+    if (settings.length !== "short") {
+      paragraphs.push(body);
+    }
+
+    if (settings.length === "long") {
+      paragraphs.push(
+        `Whether you're discovering ${topic} for the first time or already interested, we'd love to hear your perspective.`
+      );
+    }
+
+    paragraphs.push(closing);
+    paragraphs.push(
+      `${hashtags} #CreativeContent #ExploreMore`
+    );
+
+    return {
+      title: "Social Media Caption",
+      paras: paragraphs
+    };
+  }
+
+  /* ==========================================
+     MAIN DRAFT GENERATOR
+  ========================================== */
+
+  function buildDraft(settings, index = 0) {
+    if (settings.type === "email") {
+      return createEmail(settings, index);
+    }
+
+    if (settings.type === "caption") {
+      return createCaption(settings, index);
+    }
+
+    return createBlog(settings, index);
+  }
+
+  /* ==========================================
+     RENDER DRAFT IN EXISTING OUTPUT PANEL
+  ========================================== */
 
   function renderDraft(draft) {
-    draftArea.innerHTML = "";
+    draftArea.replaceChildren();
 
     const heading = document.createElement("h3");
     heading.textContent = draft.title;
-
     draftArea.appendChild(heading);
 
-    draft.paras.forEach(paragraph => {
-      const p = document.createElement("p");
-      p.textContent = paragraph;
-      draftArea.appendChild(p);
+    draft.paras.forEach(text => {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+      draftArea.appendChild(paragraph);
     });
 
-    copyBtn.disabled = false;
-    regenBtn.disabled = false;
-    refineArea.hidden = false;
+    draftArea.classList.remove("writing");
 
-    const settings = currentSettings;
+    if (copyBtn) copyBtn.disabled = false;
+    if (regenBtn) regenBtn.disabled = false;
+    if (refineArea) refineArea.hidden = false;
 
-    meta.textContent =
-      `${titleCase(settings.type)} · ` +
-      `${titleCase(settings.tone)} · ` +
-      `${titleCase(settings.length)}`;
+    if (meta && currentSettings) {
+      meta.textContent =
+        `${titleCase(currentSettings.type)} · ` +
+        `${titleCase(currentSettings.tone)} · ` +
+        `${titleCase(currentSettings.length)} · ` +
+        `Version ${version + 1}`;
+    }
   }
-
-  /* ===== GET PLAIN TEXT ===== */
 
   function getDraftText() {
     if (!currentDraft) return "";
@@ -674,75 +625,41 @@ document.addEventListener("DOMContentLoaded", () => {
     ].join("\n\n");
   }
 
-  /* ===== HISTORY ===== */
+  /* ==========================================
+     RECENT DRAFTS
+  ========================================== */
 
   function saveHistory() {
     try {
       localStorage.setItem(
-        "ai-content-history",
+        STORAGE_KEY,
         JSON.stringify(history)
       );
     } catch (error) {
-      console.warn("History could not be saved.", error);
+      console.warn("Unable to save history:", error);
     }
-  }
-
-  function loadHistory() {
-    try {
-      const stored = JSON.parse(
-        localStorage.getItem("ai-content-history") || "[]"
-      );
-
-      history = Array.isArray(stored)
-        ? stored.filter(item =>
-            item &&
-            item.settings &&
-            item.draft &&
-            Array.isArray(item.draft.paras)
-          ).slice(0, 8)
-        : [];
-    } catch {
-      history = [];
-    }
-
-    renderHistory();
-  }
-
-  function addHistory(settings, draft) {
-    history.unshift({
-      id: Date.now() + Math.random(),
-      settings: { ...settings },
-      draft: {
-        title: draft.title,
-        paras: [...draft.paras]
-      },
-      date: new Date().toLocaleString()
-    });
-
-    history = history.slice(0, 8);
-
-    saveHistory();
-    renderHistory();
   }
 
   function renderHistory() {
-    historyList.innerHTML = "";
+    if (!historyList) return;
+
+    historyList.replaceChildren();
 
     if (history.length === 0) {
-      const li = document.createElement("li");
-      li.className = "empty";
-      li.textContent = "Your drafts will appear here.";
-      historyList.appendChild(li);
+      const empty = document.createElement("li");
+      empty.className = "empty";
+      empty.textContent = "Your drafts will appear here.";
+      historyList.appendChild(empty);
       return;
     }
 
     history.forEach(item => {
       const li = document.createElement("li");
       const button = document.createElement("button");
-      const label = document.createElement("span");
+      const title = document.createElement("span");
       const small = document.createElement("small");
 
-      label.textContent =
+      title.textContent =
         item.draft.title.length > 42
           ? item.draft.title.slice(0, 42) + "..."
           : item.draft.title;
@@ -750,7 +667,7 @@ document.addEventListener("DOMContentLoaded", () => {
       small.textContent =
         `${titleCase(item.settings.type)} · ${item.date}`;
 
-      button.appendChild(label);
+      button.appendChild(title);
       button.appendChild(small);
 
       button.addEventListener("click", () => {
@@ -760,8 +677,10 @@ document.addEventListener("DOMContentLoaded", () => {
           paras: [...item.draft.paras]
         };
 
-        promptInput.value = currentSettings.topic;
+        version = Number(item.version) || 0;
         currentLength = currentSettings.length;
+
+        promptInput.value = currentSettings.topic;
 
         const typeRadio = $(
           `input[name="type"][value="${currentSettings.type}"]`
@@ -783,9 +702,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===== GENERATE ===== */
+  function addHistory() {
+    if (!currentDraft || !currentSettings) return;
 
-  function generateContent() {
+    history.unshift({
+      id: Date.now() + Math.random(),
+      version,
+      settings: { ...currentSettings },
+      draft: {
+        title: currentDraft.title,
+        paras: [...currentDraft.paras]
+      },
+      date: new Date().toLocaleString()
+    });
+
+    history = history.slice(0, 8);
+    saveHistory();
+    renderHistory();
+  }
+
+  function loadHistory() {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "[]"
+      );
+
+      history = Array.isArray(stored)
+        ? stored.filter(item =>
+            item &&
+            item.settings &&
+            item.draft &&
+            Array.isArray(item.draft.paras)
+          ).slice(0, 8)
+        : [];
+    } catch {
+      history = [];
+    }
+
+    renderHistory();
+  }
+
+  /* ==========================================
+     GENERATE BUTTON
+  ========================================== */
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+
     const settings = getSettings();
 
     if (!settings.topic) {
@@ -794,106 +757,94 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    currentSettings = settings;
-
     try {
-      currentDraft = buildDraft(settings);
+      currentSettings = settings;
+      version = 0;
+
+      currentDraft = buildDraft(currentSettings, version);
 
       renderDraft(currentDraft);
-      addHistory(settings, currentDraft);
+      addHistory();
 
       showToast("Draft generated successfully!");
     } catch (error) {
       console.error("Generation error:", error);
-      showToast("Could not generate the draft");
+      showToast("Unable to generate draft");
     }
-  }
-
-  form.addEventListener("submit", event => {
-    event.preventDefault();
-    generateContent();
   });
 
-  /* ===== SUGGESTED PROMPTS ===== */
+  /* ==========================================
+     REGENERATE BUTTON - FIXED
+     Changes actual draft content
+  ========================================== */
 
-  $$("[data-prompt]").forEach(button => {
-    button.addEventListener("click", () => {
-      promptInput.value = button.dataset.prompt;
-      promptInput.focus();
-      showToast("Prompt added");
-    });
-  });
-
-  /* ===== COPY ===== */
-
-  copyBtn.addEventListener("click", async () => {
-    const text = getDraftText();
-
-    if (!text) {
-      showToast("Generate content first");
+  regenBtn?.addEventListener("click", () => {
+    if (!currentSettings) {
+      showToast("Generate a draft first");
       return;
     }
 
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
+      const previousText = getDraftText();
 
-        document.body.appendChild(textarea);
-        textarea.select();
+      // Move to the next variation.
+      version++;
 
-        const copied = document.execCommand("copy");
-        textarea.remove();
+      let nextDraft = buildDraft(currentSettings, version);
 
-        if (!copied) {
-          throw new Error("Copy not supported");
-        }
+      // Verify that content actually changes.
+      let attempts = 0;
+
+      while (
+        [
+          nextDraft.title,
+          ...nextDraft.paras
+        ].join("\n\n") === previousText &&
+        attempts < 8
+      ) {
+        version++;
+        nextDraft = buildDraft(currentSettings, version);
+        attempts++;
       }
 
-      showToast("Copied to clipboard!");
+      const nextText = [
+        nextDraft.title,
+        ...nextDraft.paras
+      ].join("\n\n");
+
+      if (nextText === previousText) {
+        showToast("No additional variation available");
+        return;
+      }
+
+      currentDraft = nextDraft;
+
+      // Replace the existing content in #draft.
+      renderDraft(currentDraft);
+
+      // Save the new version to Recent Drafts.
+      addHistory();
+
+      showToast(
+        `Draft regenerated - Version ${version + 1}`
+      );
+
     } catch (error) {
-      console.error(error);
-      showToast("Copy failed. Please copy manually.");
+      console.error("Regeneration error:", error);
+      showToast("Unable to regenerate draft");
     }
   });
 
-
-/* ===== FIXED REGENERATE BUTTON ===== */
-
-regenBtn.addEventListener("click", () => {
-  if (!currentSettings) {
-    showToast("Generate a draft first");
-    return;
-  }
-
-  try {
-    // Create a fresh draft with different wording.
-    currentDraft = createRegeneratedDraft(currentSettings);
-
-    // Update the existing output panel.
-    renderDraft(currentDraft);
-
-    // Save the new version in recent drafts.
-    addHistory(currentSettings, currentDraft);
-
-    // Display success message.
-    showToast("New draft generated successfully!");
-
-  } catch (error) {
-    console.error("Regeneration error:", error);
-    showToast("Unable to regenerate draft");
-  }
-});
-
-   /* ===== REFINE ===== */
+  /* ==========================================
+     REFINE BUTTONS
+  ========================================== */
 
   $$("[data-refine]").forEach(button => {
     button.addEventListener("click", () => {
-      if (!currentSettings) return;
+      if (!currentSettings) {
+        showToast("Generate a draft first");
+        return;
+      }
 
       const action = button.dataset.refine;
 
@@ -920,23 +871,97 @@ regenBtn.addEventListener("click", () => {
       }
 
       currentSettings = getSettings();
-      currentDraft = buildDraft(currentSettings);
+
+      version++;
+      currentDraft = buildDraft(currentSettings, version);
 
       renderDraft(currentDraft);
-      addHistory(currentSettings, currentDraft);
+      addHistory();
 
-      showToast("Draft refined!");
+      showToast("Draft refined successfully!");
     });
   });
 
-  /* ===== MOBILE MENU ===== */
+  /* ==========================================
+     SUGGESTED PROMPTS
+  ========================================== */
 
+  $$("[data-prompt]").forEach(button => {
+    button.addEventListener("click", () => {
+      promptInput.value = button.dataset.prompt || "";
+      promptInput.focus();
+      showToast("Prompt added");
+    });
+  });
+
+  /* ==========================================
+     COPY BUTTON
+  ========================================== */
+
+  copyBtn?.addEventListener("click", async () => {
+    const text = getDraftText();
+
+    if (!text) {
+      showToast("Generate a draft first");
+      return;
+    }
+
+    try {
+      if (
+        navigator.clipboard &&
+        window.isSecureContext
+      ) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        const copied = document.execCommand("copy");
+        textarea.remove();
+
+        if (!copied) {
+          throw new Error("Copy failed");
+        }
+      }
+
+      showToast("Content copied successfully!");
+    } catch (error) {
+      console.error("Copy error:", error);
+      showToast("Copy failed. Please copy manually.");
+    }
+  });
+
+  /* ==========================================
+     NAVIGATION + MOBILE MENU
+  ========================================== */
+
+  const nav = $("#nav");
   const burger = $("#burger");
   const links = $("#links");
+
+  function updateNavbar() {
+    nav?.classList.toggle(
+      "scrolled",
+      window.scrollY > 30
+    );
+  }
+
+  window.addEventListener("scroll", updateNavbar, {
+    passive: true
+  });
+
+  updateNavbar();
 
   burger?.addEventListener("click", () => {
     burger.classList.toggle("open");
     links?.classList.toggle("open");
+
     burger.setAttribute(
       "aria-expanded",
       String(burger.classList.contains("open"))
@@ -950,25 +975,6 @@ regenBtn.addEventListener("click", () => {
     });
   });
 
-  /* ===== NAVBAR SCROLL ===== */
-
-  const nav = $("#nav");
-
-  function updateNav() {
-    nav?.classList.toggle(
-      "scrolled",
-      window.scrollY > 30
-    );
-  }
-
-  window.addEventListener("scroll", updateNav, {
-    passive: true
-  });
-
-  updateNav();
-
-  /* ===== BACK TO TOP ===== */
-
   $("#toTop")?.addEventListener("click", () => {
     window.scrollTo({
       top: 0,
@@ -976,12 +982,13 @@ regenBtn.addEventListener("click", () => {
     });
   });
 
-  /* =========================================
-     MOVING 3D-STYLE CANVAS BACKGROUND
-  ========================================= */
+  /* ==========================================
+     MOVING CANVAS BACKGROUND
+  ========================================== */
 
   const canvas = $("#bg3d");
   const ctx = canvas?.getContext("2d");
+
   const reduceMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   ).matches;
@@ -996,25 +1003,6 @@ regenBtn.addEventListener("click", () => {
       y: -1000
     };
 
-    function resizeCanvas() {
-      const ratio = Math.min(
-        window.devicePixelRatio || 1,
-        2
-      );
-
-      width = window.innerWidth;
-      height = window.innerHeight;
-
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
-
-      ctx.setTransform(
-        ratio, 0, 0, ratio, 0, 0
-      );
-
-      createParticles();
-    }
-
     function createParticles() {
       const count = Math.min(
         85,
@@ -1027,11 +1015,28 @@ regenBtn.addEventListener("click", () => {
           x: Math.random() * width,
           y: Math.random() * height,
           radius: Math.random() * 1.6 + 0.5,
-          speedX: (Math.random() - 0.5) * 0.5,
-          speedY: (Math.random() - 0.5) * 0.5,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
           opacity: Math.random() * 0.4 + 0.15
         })
       );
+    }
+
+    function resizeCanvas() {
+      const ratio = Math.min(
+        window.devicePixelRatio || 1,
+        2
+      );
+
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      createParticles();
     }
 
     function drawBackground() {
@@ -1041,25 +1046,17 @@ regenBtn.addEventListener("click", () => {
         const p = particles[i];
 
         ctx.beginPath();
-        ctx.arc(
-          p.x,
-          p.y,
-          p.radius,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fillStyle =
-          `rgba(92,255,200,${p.opacity})`;
-
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(92,255,200,${p.opacity})`;
         ctx.fill();
 
         for (let j = i + 1; j < particles.length; j++) {
           const other = particles[j];
 
-          const dx = p.x - other.x;
-          const dy = p.y - other.y;
-          const distance = Math.hypot(dx, dy);
+          const distance = Math.hypot(
+            p.x - other.x,
+            p.y - other.y
+          );
 
           if (distance < 130) {
             ctx.beginPath();
@@ -1074,32 +1071,28 @@ regenBtn.addEventListener("click", () => {
           }
         }
 
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const distance = Math.hypot(dx, dy);
+        const distanceToMouse = Math.hypot(
+          p.x - mouse.x,
+          p.y - mouse.y
+        );
 
-        if (distance < 150 && distance > 0) {
+        if (distanceToMouse < 150) {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(mouse.x, mouse.y);
 
           ctx.strokeStyle =
-            `rgba(92,255,200,${(1 - distance / 150) * 0.2})`;
+            `rgba(92,255,200,${(1 - distanceToMouse / 150) * 0.2})`;
 
           ctx.stroke();
         }
 
         if (!reduceMotion) {
-          p.x += p.speedX;
-          p.y += p.speedY;
+          p.x += p.vx;
+          p.y += p.vy;
 
-          if (p.x < 0 || p.x > width) {
-            p.speedX *= -1;
-          }
-
-          if (p.y < 0 || p.y > height) {
-            p.speedY *= -1;
-          }
+          if (p.x < 0 || p.x > width) p.vx *= -1;
+          if (p.y < 0 || p.y > height) p.vy *= -1;
         }
       }
 
@@ -1108,10 +1101,14 @@ regenBtn.addEventListener("click", () => {
       }
     }
 
-    window.addEventListener("pointermove", event => {
-      mouse.x = event.clientX;
-      mouse.y = event.clientY;
-    }, { passive: true });
+    window.addEventListener(
+      "pointermove",
+      event => {
+        mouse.x = event.clientX;
+        mouse.y = event.clientY;
+      },
+      { passive: true }
+    );
 
     window.addEventListener("resize", resizeCanvas);
 
@@ -1119,9 +1116,9 @@ regenBtn.addEventListener("click", () => {
     drawBackground();
   }
 
-  /* =========================================
+  /* ==========================================
      MOVING GLOWING CURSOR
-  ========================================= */
+  ========================================== */
 
   if (
     window.matchMedia("(pointer: fine)").matches &&
@@ -1175,23 +1172,23 @@ regenBtn.addEventListener("click", () => {
     animateCursor();
 
     document.addEventListener("mouseover", event => {
-      if (
-        event.target.closest(
-          "button, a, input, label"
+      ring.classList.toggle(
+        "hov",
+        Boolean(
+          event.target.closest("button, a, input, label")
         )
-      ) {
-        ring.classList.add("hov");
-      } else {
-        ring.classList.remove("hov");
-      }
+      );
     });
   }
 
-  /* ===== STARTUP ===== */
+  /* ==========================================
+     STARTUP
+  ========================================== */
 
   loadHistory();
 
   console.log(
-    "AI Content Generator initialized successfully."
+    "AI Content Generator loaded successfully."
   );
+
 });
