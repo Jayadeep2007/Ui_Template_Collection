@@ -1,113 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Content Generator</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; padding: 40px 16px;
-    background: #0f0c1d; color: #eee;
-    font-family: system-ui, Arial, sans-serif;
-  }
-  .card {
-    max-width: 720px; margin: 0 auto; padding: 28px;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px; backdrop-filter: blur(10px);
-  }
-  h1 { margin-top: 0; }
-  label { display: block; margin: 14px 0 6px; font-size: 14px; color: #c4b5fd; }
-  input, select {
-    width: 100%; padding: 12px; border-radius: 10px; font-size: 16px;
-    border: 1px solid #4c3f8f; background: #1a1535; color: #fff;
-  }
-  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-  button {
-    padding: 12px 20px; border: 0; border-radius: 10px; cursor: pointer;
-    font-size: 15px; color: #fff; background: #7c3aed;
-  }
-  button.secondary { background: #3b3366; }
-  #output {
-    margin-top: 24px; padding: 18px; min-height: 120px;
-    background: #1a1535; border-radius: 12px; line-height: 1.6;
-    white-space: pre-wrap; border: 1px solid #4c3f8f;
-  }
-  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+/* ===== AI CONTENT GENERATOR ===== */
 
-  @keyframes floatOrb {
-    0%,100% { transform: translate(0,0) scale(1); }
-    50% { transform: translate(60px,-70px) scale(1.15); }
-  }
-  @keyframes contentAppear {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animated-orb {
-    position: fixed; border-radius: 50%; filter: blur(65px); opacity: .32;
-    pointer-events: none; z-index: -1; animation: floatOrb 12s ease-in-out infinite;
-  }
-  .custom-cursor {
-    position: fixed; width: 22px; height: 22px; border: 2px solid #a78bfa;
-    border-radius: 50%; pointer-events: none; z-index: 99999;
-    transform: translate(-50%,-50%); transition: width .2s, height .2s;
-    box-shadow: 0 0 20px #a78bfa88;
-  }
-  .cursor-dot {
-    position: fixed; width: 6px; height: 6px; background: #c4b5fd;
-    border-radius: 50%; pointer-events: none; z-index: 100000;
-    transform: translate(-50%,-50%);
-  }
-  @media (pointer: coarse) { .custom-cursor, .cursor-dot { display: none; } }
-  @media (prefers-reduced-motion: reduce) { .animated-orb { animation: none; } }
-</style>
-</head>
-<body>
-
-<div class="card">
-  <h1>AI Content Generator</h1>
-
-  <label for="topic">Topic</label>
-  <input id="topic" placeholder="e.g. AI in education">
-
-  <div class="row">
-    <div>
-      <label for="type">Type</label>
-      <select id="type">
-        <option value="blog">Blog</option>
-        <option value="email">Email</option>
-        <option value="caption">Caption</option>
-      </select>
-    </div>
-    <div>
-      <label for="tone">Tone</label>
-      <select id="tone">
-        <option value="friendly">Friendly</option>
-        <option value="formal">Formal</option>
-        <option value="playful">Playful</option>
-      </select>
-    </div>
-    <div>
-      <label for="length">Length</label>
-      <select id="length">
-        <option value="short">Short</option>
-        <option value="medium" selected>Medium</option>
-        <option value="long">Long</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="buttons">
-    <button id="generateBtn">Generate</button>
-    <button id="copyBtn" class="secondary">Copy</button>
-    <button id="downloadBtn" class="secondary">Download</button>
-  </div>
-
-  <div id="output">Your generated content will appear here.</div>
-</div>
-
-<script>
 const TONES = {
   formal:   { open: "Introducing", cta: "We invite you to explore this further.", sign: "Best regards," },
   friendly: { open: "Let's talk about", cta: "Give it a try and let us know what you think!", sign: "Cheers," },
@@ -138,6 +30,8 @@ function normalize(value, allowed, fallback) {
   const v = String(value || "").toLowerCase().trim();
   return allowed.find(a => v === a || v.includes(a)) || fallback;
 }
+
+/* ===== CONTENT GENERATOR ===== */
 
 function buildDraft({ type, topic, tone, length }) {
   type   = normalize(type, ["blog", "email", "caption"], "blog");
@@ -241,86 +135,192 @@ function buildDraft({ type, topic, tone, length }) {
   };
 }
 
-/* ===== WIRING ===== */
-const $ = id => document.getElementById(id);
-const topicInput = $("topic"), typeInput = $("type"), toneInput = $("tone"),
-      lengthInput = $("length"), output = $("output");
-let generatedText = "";
+/* ===== CONNECT TO YOUR HTML ===== */
 
-function generateContent() {
-  const topic = topicInput.value.trim();
-  if (!topic) { alert("Please enter a topic first."); topicInput.focus(); return; }
+function initGenerator() {
+  const find = (...selectors) => {
+    for (const s of selectors) {
+      const el = document.querySelector(s);
+      if (el) return el;
+    }
+    return null;
+  };
 
-  const draft = buildDraft({
-    type: typeInput.value, topic, tone: toneInput.value, length: lengthInput.value
+  const findButton = word =>
+    [...document.querySelectorAll("button, input[type='button'], input[type='submit'], a")]
+      .find(b => (b.textContent || b.value || "").toLowerCase().includes(word));
+
+  const selects = [...document.querySelectorAll("select")];
+
+  const topicInput = find("#topic", "#topicInput", "[name='topic']", "input[type='text']", "textarea", "input:not([type])");
+  const typeInput  = find("#type", "#contentType", "[name='type']") || selects[0] || null;
+  const toneInput  = find("#tone", "[name='tone']") || selects[1] || null;
+  const lengthInput = find("#length", "[name='length']") || selects[2] || null;
+  const output = find("#output", "#result", "#generatedContent", ".output-content", ".output", ".result");
+  const generateBtn = find("#generateBtn", "#generate", "[data-action='generate']") || findButton("generate");
+  const copyBtn = find("#copyBtn", "#copy", "[data-action='copy']") || findButton("copy");
+  const downloadBtn = find("#downloadBtn", "#download", "[data-action='download']") || findButton("download");
+
+  const missing = Object.entries({ topicInput, output, generateBtn })
+    .filter(([, el]) => !el).map(([name]) => name);
+  if (missing.length) {
+    console.error("Generator could not find these elements in your HTML:", missing,
+      "-> give them ids: topic, output, generateBtn");
+  }
+
+  if (output) output.style.whiteSpace = "pre-wrap";
+
+  let generatedText = "";
+
+  function renderOutput(text) {
+    if (!output) return;
+    if (output.tagName === "TEXTAREA" || output.tagName === "INPUT") output.value = text;
+    else output.textContent = text;
+  }
+
+  function generateContent(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const topic = (topicInput?.value || "").trim();
+    if (!topic) {
+      alert("Please enter a topic first.");
+      topicInput?.focus();
+      return;
+    }
+
+    const draft = buildDraft({
+      type: typeInput?.value || "blog",
+      topic,
+      tone: toneInput?.value || "friendly",
+      length: lengthInput?.value || "medium"
+    });
+
+    generatedText = [draft.title, ...draft.paras].join("\n\n");
+    renderOutput(generatedText);
+
+    if (output) {
+      output.style.animation = "none";
+      void output.offsetWidth;
+      output.style.animation = "contentAppear 0.5s ease";
+    }
+  }
+
+  generateBtn?.addEventListener("click", generateContent);
+  topicInput?.addEventListener("keydown", e => {
+    if (e.key === "Enter" && topicInput.tagName === "INPUT") generateContent(e);
   });
 
-  generatedText = [draft.title, ...draft.paras].join("\n\n");
-  output.textContent = generatedText;
-  output.style.animation = "none";
-  void output.offsetWidth;
-  output.style.animation = "contentAppear 0.5s ease";
+  copyBtn?.addEventListener("click", async e => {
+    e.preventDefault();
+    if (!generatedText) return alert("Generate content first.");
+    try {
+      await navigator.clipboard.writeText(generatedText);
+      const old = copyBtn.textContent;
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = old), 1500);
+    } catch {
+      alert("Unable to copy automatically.");
+    }
+  });
+
+  downloadBtn?.addEventListener("click", e => {
+    e.preventDefault();
+    if (!generatedText) return alert("Generate content first.");
+    const url = URL.createObjectURL(new Blob([generatedText], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "generated-content.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  /* ===== ANIMATED BACKGROUND ===== */
+
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes floatOrb {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, -70px) scale(1.15); }
+    }
+    @keyframes contentAppear {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animated-orb {
+      position: fixed; border-radius: 50%; filter: blur(65px);
+      opacity: 0.32; pointer-events: none; z-index: -1;
+      animation: floatOrb 12s ease-in-out infinite;
+    }
+    .custom-cursor {
+      position: fixed; width: 22px; height: 22px;
+      border: 2px solid #a78bfa; border-radius: 50%;
+      pointer-events: none; z-index: 99999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s;
+      box-shadow: 0 0 20px #a78bfa88;
+    }
+    .cursor-dot {
+      position: fixed; width: 6px; height: 6px; background: #c4b5fd;
+      border-radius: 50%; pointer-events: none; z-index: 100000;
+      transform: translate(-50%, -50%);
+    }
+    @media (pointer: coarse) { .custom-cursor, .cursor-dot { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .animated-orb { animation: none; } }
+  `;
+  document.head.appendChild(style);
+
+  ["rgba(168,85,247,0.45)", "rgba(236,72,153,0.35)", "rgba(99,102,241,0.35)"].forEach((color, i) => {
+    const orb = document.createElement("div");
+    orb.className = "animated-orb";
+    orb.style.width = orb.style.height = `${250 + i * 90}px`;
+    orb.style.background = color;
+    orb.style.top = `${i * 28}%`;
+    orb.style.left = `${i * 30}%`;
+    orb.style.animationDelay = `${i * -4}s`;
+    document.body.appendChild(orb);
+  });
+
+  /* ===== GLOWING FOLLOW CURSOR ===== */
+
+  if (window.matchMedia("(pointer: fine)").matches) {
+    const cursor = document.createElement("div");
+    cursor.className = "custom-cursor";
+    const dot = document.createElement("div");
+    dot.className = "cursor-dot";
+    document.body.append(cursor, dot);
+
+    let mouseX = -100, mouseY = -100, cursorX = -100, cursorY = -100;
+
+    document.addEventListener("mousemove", e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.left = mouseX + "px";
+      dot.style.top = mouseY + "px";
+    });
+
+    (function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.14;
+      cursorY += (mouseY - cursorY) * 0.14;
+      cursor.style.left = cursorX + "px";
+      cursor.style.top = cursorY + "px";
+      requestAnimationFrame(animateCursor);
+    })();
+
+    const interactive = "button, a, input, select, textarea";
+    document.addEventListener("mouseover", e => {
+      if (e.target.closest(interactive)) cursor.style.width = cursor.style.height = "42px";
+    });
+    document.addEventListener("mouseout", e => {
+      if (e.target.closest(interactive)) cursor.style.width = cursor.style.height = "22px";
+    });
+  }
 }
 
-$("generateBtn").addEventListener("click", generateContent);
-topicInput.addEventListener("keydown", e => { if (e.key === "Enter") generateContent(); });
-
-$("copyBtn").addEventListener("click", async () => {
-  if (!generatedText) return alert("Generate content first.");
-  try {
-    await navigator.clipboard.writeText(generatedText);
-    const b = $("copyBtn"), old = b.textContent;
-    b.textContent = "Copied!";
-    setTimeout(() => (b.textContent = old), 1500);
-  } catch { alert("Unable to copy automatically."); }
-});
-
-$("downloadBtn").addEventListener("click", () => {
-  if (!generatedText) return alert("Generate content first.");
-  const url = URL.createObjectURL(new Blob([generatedText], { type: "text/plain;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url; a.download = "generated-content.txt";
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-});
-
-/* ===== BACKGROUND ORBS ===== */
-["rgba(168,85,247,0.45)", "rgba(236,72,153,0.35)", "rgba(99,102,241,0.35)"].forEach((color, i) => {
-  const orb = document.createElement("div");
-  orb.className = "animated-orb";
-  orb.style.width = orb.style.height = `${250 + i * 90}px`;
-  orb.style.background = color;
-  orb.style.top = `${i * 28}%`;
-  orb.style.left = `${i * 30}%`;
-  orb.style.animationDelay = `${i * -4}s`;
-  document.body.appendChild(orb);
-});
-
-/* ===== GLOWING CURSOR ===== */
-if (window.matchMedia("(pointer: fine)").matches) {
-  const cursor = document.createElement("div"); cursor.className = "custom-cursor";
-  const dot = document.createElement("div"); dot.className = "cursor-dot";
-  document.body.append(cursor, dot);
-
-  let mx = -100, my = -100, cx = -100, cy = -100;
-  document.addEventListener("mousemove", e => {
-    mx = e.clientX; my = e.clientY;
-    dot.style.left = mx + "px"; dot.style.top = my + "px";
-  });
-  (function loop() {
-    cx += (mx - cx) * 0.14; cy += (my - cy) * 0.14;
-    cursor.style.left = cx + "px"; cursor.style.top = cy + "px";
-    requestAnimationFrame(loop);
-  })();
-
-  const sel = "button, a, input, select, textarea";
-  document.addEventListener("mouseover", e => {
-    if (e.target.closest(sel)) cursor.style.width = cursor.style.height = "42px";
-  });
-  document.addEventListener("mouseout", e => {
-    if (e.target.closest(sel)) cursor.style.width = cursor.style.height = "22px";
-  });
+// Works whether the script loads before or after the page is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initGenerator);
+} else {
+  initGenerator();
 }
-</script>
-</body>
-</html>
